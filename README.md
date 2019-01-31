@@ -1,4 +1,4 @@
-# web-practice
+# Order Book Website
 
 This project displays order book in tables using [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https://bootstrap-vue.js.org/). 
 
@@ -46,4 +46,4 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
-# OrderBookWebsite
+
