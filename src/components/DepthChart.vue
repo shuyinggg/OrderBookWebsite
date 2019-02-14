@@ -36,7 +36,7 @@ export default {
                 right:20
             };
             
-            //responsive svg
+            //draw responsive svg 
             const svg = d3.select('#chart')
                         .append('div')
                         .classed("svg-container", true)
@@ -51,7 +51,7 @@ export default {
                         .range([height - margin.bottom, margin.top])
                         .domain([d3.min(this.a1,d=>d.SUM/d.BID), 800]);
             
-            //draw axes
+            //append axes
             svg.append('g')
             .attr('class', 'axis axis-x')
             .attr('transform', `translate(0,${height - margin.bottom})`)
@@ -63,7 +63,7 @@ export default {
             .call(d3.axisLeft(y))
             .style("color","grey")
 
-            //grids
+            //append grids
             svg.append("g")			
                 .attr("class", "grid")
                 .attr("transform", `translate(0,${height - margin.bottom})`)
@@ -84,7 +84,7 @@ export default {
                 .style("color","grey")
                 .attr("opacity",0.3)
 
-            //tooltips
+            //tooltip generator with d3.tip
             const tip1 = d3Tip()
                     .attr('class','d3-tip')
                     .offset([-10,0])
@@ -101,18 +101,17 @@ export default {
             svg.call(tip1);
             svg.call(tip2);
 
-
-
+            //area generator
             const area1 = d3.area()
                         .x(d => x(d.BID))
                         .y0(y(0))
                         .y1(d => y(d.SUM/d.BID));
-
             const area2 = d3.area()
                         .x(d => x(d.ASK))
                         .y0(y(0))
                         .y1(d => y(d.SUM/d.ASK));
 
+            //line generator
             const line1 = d3.line()
                         .x(d => x(d.BID))
                         .y(d => y(d.SUM/d.BID));
@@ -134,7 +133,7 @@ export default {
             .attr("stroke","red")
             .attr("stroke-width",3)
 
-            //append area
+            //append area for shaded area under the line
             svg.append('path')
             .datum(this.a1)
             .attr("fill", "green")
@@ -146,7 +145,7 @@ export default {
             .attr("opacity",0.2)
             .attr("d",area2)
 
-            //append circles for tooltip
+            //append circles for tooltip use
             svg.selectAll("dot")
             .data(this.a1)
             .enter().append('circle')
@@ -157,7 +156,6 @@ export default {
             .attr("cy",function(d) {return y(d.SUM/d.BID)})
             .on('mouseover',tip1.show)
             .on('mouseout',tip1.hide)
-
             svg.selectAll("dot")
             .data(this.a2)
             .enter().append('circle')
@@ -168,7 +166,6 @@ export default {
             .attr("cy",function(d) {return y(d.SUM/d.ASK)})
             .on('mouseover',tip2.show)
             .on('mouseout',tip2.hide)
-
         },
 
     }
