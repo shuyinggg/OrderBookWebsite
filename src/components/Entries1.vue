@@ -13,7 +13,7 @@
       :fields="fields"
       class="text-right"
       >
-    <template slot="ASKBID" slot-scope="data">
+    <template slot="BID" slot-scope="data">
       <a class="text-success">
         {{data.value}}
       </a>
@@ -42,7 +42,7 @@ export default {
              label: 'SIZE(BTC)'
            },
           {
-             key: 'ASKBID',
+             key: 'BID',
              label: 'BID(USD)',  
          }],
         entry: list,
@@ -70,7 +70,7 @@ export default {
         return this.entry.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
       },
       total2 () {
-        return this.entry.reduce(function(a, c){return a + c.ASKBID || 0},0).toFixed(3)
+        return this.entry.reduce(function(a, c){return a + c.BID || 0},0).toFixed(3)
       }
   }
 }

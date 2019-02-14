@@ -13,7 +13,7 @@
       :fields="fields"
       class="text-right"
       >
-    <template slot="ASKBID" slot-scope="data">
+    <template slot="ASK" slot-scope="data">
       <a class="text-danger">
         {{data.value}}
       </a>
@@ -41,7 +41,7 @@ export default {
   data () {
      return {
          fields: [{
-             key: 'ASKBID',
+             key: 'ASK',
              label: 'ASK(USD)',  
          },
          {
@@ -73,7 +73,7 @@ export default {
         return this.entry.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
       },
       total2 () {
-        return this.entry.reduce(function(a, c){return a + c.ASKBID || 0},0).toFixed(3)
+        return this.entry.reduce(function(a, c){return a + c.ASK || 0},0).toFixed(3)
       }
   }
 }

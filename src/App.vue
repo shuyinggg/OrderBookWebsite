@@ -2,6 +2,11 @@
   <div id="app">
     <b-container class="bg-dark" >
       <b-row>
+        <b-col>
+          <DepthChart></DepthChart>
+        </b-col>
+      </b-row>
+      <b-row>
         <b-col><Entries1 v-bind:perPage="getPage" currentPage=1></Entries1></b-col>
         <b-col><Entries2 v-bind:perPage="getPage" currentPage=1></Entries2></b-col>
       </b-row>
@@ -21,13 +26,18 @@
 </template>
 
 <script>
+import DepthChart from './components/DepthChart.vue'
 import Entries1 from './components/Entries1.vue'
 import Entries2 from './components/Entries2.vue'
+
+
+
 export default {
   name: 'app',
   components: {
     Entries1,
     Entries2,
+    DepthChart,
   },
   data () {
     return {
