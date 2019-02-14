@@ -1,22 +1,30 @@
 # Order Book Website
 
-This project displays order book in tables using [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https://bootstrap-vue.js.org/). 
+This projects uses [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https://bootstrap-vue.js.org/).
+
+It displays a depth graph of order book using [d3.js](https://github.com/d3/d3) and the two tables contain all the sample order book.
 
 
-## Project setup
+## Project Setup
+
 ```
 npm install
 npm i bootstrap-vue
+npm install d3
+npm install d3-tip 
 ```
+[d3-tip](https://github.com/Caged/d3-tip) adds tooltips for d3.js visualization.
 
-## code structure
+## Code Structure
 ```
 .
 ├── public                   
 ├── src
 │   ├── assets 
-│       ├── list.json               # sample data in the table
+│       ├── list1.json              # sample data in the table from sellers
+        ├── list2.json              # sample data in the table from buyers
 │   ├── components                  # vue components
+        ├── DepthChart.vue          # depth chart based on sample data
 │       ├── Entries1.vue            # left table
 │       ├── Entries2.vue            # right table
 │   ├── App.vue
@@ -28,11 +36,12 @@ npm i bootstrap-vue
 └── README.md
 ```
 
-## Compiles and hot-reloads for development
+## Usage
+### Compiles and hot-reloads for development
 ```
 npm run serve
 ```
-Then navigate to the localcost shown in the terminal.
+Then navigate to the localcost shown in the terminal, usually [http://localhost:8080/](http://localhost:8080/).
 
 ### Compiles and minifies for production
 ```

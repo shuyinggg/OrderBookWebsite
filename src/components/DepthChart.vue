@@ -84,10 +84,6 @@ export default {
                 .style("color","grey")
                 .attr("opacity",0.3)
 
-            //tooltip lines
-            const tipline = svg.append('div')
-                        .attr("class","tooltip")
-                        .append('g')
             //tooltips
             const tip1 = d3Tip()
                     .attr('class','d3-tip')
