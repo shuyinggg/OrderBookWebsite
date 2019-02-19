@@ -36,11 +36,14 @@ npm install d3
 ```
 
 ## Usage
+
+In terminal, 
+
 ### Compiles and hot-reloads for development
 ```
 npm run serve
 ```
-Then navigate to the localcost shown in the terminal, usually [http://localhost:8080/](http://localhost:8080/).
+Then navigate to the localhost shown in the terminal, usually [http://localhost:8080/](http://localhost:8080/).
 
 ### Compiles and minifies for production
 ```
