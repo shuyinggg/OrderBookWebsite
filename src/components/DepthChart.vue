@@ -13,20 +13,51 @@ export default {
     name: 'chart',
     data() {
         return {
-            a1: this.parseData(list1),
-            a2: this.parseData(list2),
+            //a1 and a2 only have length 50
+            a1: this.parseData1(list1),
+            a2: this.parseData2(list2),
             clientWidth: 900,
-            clientHeight: 600
+            clientHeight: 500
         }
     },
     mounted () {
                 this.createChart(this.clientWidth,this.clientHeight)
     },
+    computed: {
+        getx0 () {
+            return d3.min(this.a1, d => d.BID);
+        },
+        getxend () {
+            return d3.max(this.a2, d => d.ASK);
+        },
+        getyend () {
+            return d3.max([d3.max(this.a1, d => d.cumSIZE),d3.max(this.a2, d => d.cumSIZE)]);
+        }
+    },
     methods: {
-        parseData(jdata) {
-            var arr = Object.keys(jdata).map(function(k) { return jdata[k] });
-            arr = arr.sort((a,b)=>(a.SUM > b.SUM? 1:-1));
-            return arr; 
+        parseData1(jdata) {
+            var arr = Object.keys(jdata).map(function(k) { return jdata[k]});
+            arr = arr.sort((a,b)=>(a.BID > b.BID? -1:1)); //descend
+            //add a new field in json array to store the cumulative size
+            var sum = 0;
+            arr.map(function(a) {
+                a.cumSIZE = sum + a.SIZE;
+                sum = a.cumSIZE;
+            })
+            //plot only the top 50 entries
+            return arr.slice(0,50); 
+        },
+        parseData2(jdata) {
+            var arr = Object.keys(jdata).map(function(k) { return jdata[k]});
+            arr = arr.sort((a,b)=>(a.ASK > b.ASK? 1:-1)); //ascend
+            //add a new field in json array to store the cumulative size
+            var sum = 0;
+            arr.map(function(a) {
+                a.cumSIZE = sum + a.SIZE;
+                sum = a.cumSIZE;
+            })
+            //plot only the top 50 entries
+            return arr.slice(0,50); 
         },
         createChart(width, height) {
             const margin = {
@@ -46,10 +77,10 @@ export default {
                         .classed("svg-content-responsive", true); 
             const x = d3.scaleLinear()
                         .range([margin.left, width - margin.right])
-                        .domain([d3.min(this.a1, d => d.BID),d3.max(this.a2, d => d.ASK)]);
+                        .domain([this.getx0,this.getxend]);
             const y = d3.scaleLinear()
                         .range([height - margin.bottom, margin.top])
-                        .domain([d3.min(this.a1,d=>d.SUM/d.BID), 800]);
+                        .domain([0, this.getyend]);
             
             //append axes
             svg.append('g')
@@ -89,14 +120,14 @@ export default {
                     .attr('class','d3-tip')
                     .offset([-10,0])
                     .html(function(d) {
-                        return "<strong>SUM:</strong> <span style='color:grey'>" + d.SUM + "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID+ "</span><br/><strong>Volumn:</strong> <span style='color:grey'>" + d.SUM/d.BID + "</span>";
+                        return "<strong>SUM:</strong> <span style='color:grey'>" + d.SUM + "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID+ "</span><br/><strong>Volumn:</strong> <span style='color:grey'>" + d.SIZE + "</span>";
                     })
 
             const tip2 = d3Tip()
                     .attr('class','d3-tip')
                     .offset([-10,0])
                     .html(function(d) {
-                        return "<strong>SUM:</strong> <span style='color:grey'>" + d.SUM + "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK+ "</span><br/><strong>Volumn:</strong> <span style='color:grey'>" + d.SUM/d.ASK + "</span>";
+                        return "<strong>SUM:</strong> <span style='color:grey'>" + d.SUM + "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK+ "</span><br/><strong>Volumn:</strong> <span style='color:grey'>" + d.SIZE + "</span>";
                     });
             svg.call(tip1);
             svg.call(tip2);
@@ -105,20 +136,20 @@ export default {
             const area1 = d3.area()
                         .x(d => x(d.BID))
                         .y0(y(0))
-                        .y1(d => y(d.SUM/d.BID));
+                        .y1(d => y(d.cumSIZE));
             const area2 = d3.area()
                         .x(d => x(d.ASK))
                         .y0(y(0))
-                        .y1(d => y(d.SUM/d.ASK));
+                        .y1(d => y(d.cumSIZE));
 
             //line generator
             const line1 = d3.line()
                         .x(d => x(d.BID))
-                        .y(d => y(d.SUM/d.BID));
+                        .y(d => y(d.cumSIZE));
 
             const line2 = d3.line()
                         .x(d => x(d.ASK))
-                        .y(d => y(d.SUM/d.ASK));
+                        .y(d => y(d.cumSIZE));
             //append lines
             svg.append('path')
             .datum(this.a1)
@@ -153,7 +184,7 @@ export default {
             .attr("opacity",0)
             .attr("r",3)
             .attr("cx",function(d) {return x(d.BID)})
-            .attr("cy",function(d) {return y(d.SUM/d.BID)})
+            .attr("cy",function(d) {return y(d.cumSIZE)})
             .on('mouseover',tip1.show)
             .on('mouseout',tip1.hide)
             svg.selectAll("dot")
@@ -163,7 +194,7 @@ export default {
             .attr("opacity",0)
             .attr("r",3)
             .attr("cx",function(d) {return x(d.ASK)})
-            .attr("cy",function(d) {return y(d.SUM/d.ASK)})
+            .attr("cy",function(d) {return y(d.cumSIZE)})
             .on('mouseover',tip2.show)
             .on('mouseout',tip2.hide)
         },
@@ -178,9 +209,11 @@ export default {
     display: inline-block;
     position: relative;
     width: 100%;
-    padding-bottom: 70%; /* aspect ratio */
+    padding-bottom: 60%; /* aspect ratio */
     vertical-align: top;
     overflow: hidden;
+    background: rgba(24, 23, 23, 0.8);
+    top: 10px;
 }
 .svg-content-responsive {
     display: inline-block;
@@ -193,7 +226,7 @@ export default {
   line-height: 1;
   font-weight: bold;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(61, 60, 60, 0.8);
   color: #fff;
   border-radius: 2px;
 }
