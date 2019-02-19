@@ -13,9 +13,25 @@
       :fields="fields"
       class="text-right"
       >
+    <!-- fix display styles, like color and precision -->
     <template slot="BID" slot-scope="data">
       <a class="text-success">
-        {{data.value}}
+        {{data.value.toFixed(4)}}
+      </a>
+    </template>
+    <template slot="SUM" slot-scope="data">
+      <a>
+        {{data.value.toFixed(4)}}
+      </a>
+    </template>
+    <template slot="TOTAL" slot-scope="data">
+      <a>
+        {{data.value.toFixed(4)}}
+      </a>
+    </template>
+    <template slot="SIZE" slot-scope="data">
+      <a>
+        {{data.value.toFixed(3)}}
       </a>
     </template>
   </b-table>
@@ -28,10 +44,10 @@
 </template>
 
 <script>
-import list from '@/assets/list1.json'
+import list from '@/assets/bid.json'
 
 export default {
-  name: 'Entries',
+  name: 'Sells',
   data () {
      return {
          fields: [
@@ -45,7 +61,7 @@ export default {
              key: 'BID',
              label: 'BID(USD)',  
          }],
-        entry: list,
+        orders: list,
      } 
   },
     props: {
@@ -54,10 +70,10 @@ export default {
     },
   computed: {
       getAll () {
-        return this.entry;
+        return this.orders;
       },
       getLen () {
-          return this.entry.length
+          return this.orders.length
       },
       getPerPage () {
         return this.perPage
@@ -67,10 +83,10 @@ export default {
         return this.currentPage
       },
       total1 () {
-        return this.entry.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
+        return this.orders.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
       },
       total2 () {
-        return this.entry.reduce(function(a, c){return a + c.BID || 0},0).toFixed(3)
+        return this.orders.reduce(function(a, c){return a + c.BID || 0},0).toFixed(3)
       }
   }
 }

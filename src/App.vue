@@ -7,8 +7,8 @@
         </b-col>
       </b-row>
       <b-row>
-        <b-col><Entries1 v-bind:perPage="getPage" currentPage=1></Entries1></b-col>
-        <b-col><Entries2 v-bind:perPage="getPage" currentPage=1></Entries2></b-col>
+        <b-col><Sellers v-bind:perPage="getPage" :currentPage="getcurrPage"></Sellers></b-col>
+        <b-col><Buyers v-bind:perPage="getPage" :currentPage="getcurrPage"></Buyers></b-col>
       </b-row>
       <b-row class="text-center">
         <b-col>
@@ -27,16 +27,16 @@
 
 <script>
 import DepthChart from './components/DepthChart.vue'
-import Entries1 from './components/Entries1.vue'
-import Entries2 from './components/Entries2.vue'
+import Sellers from './components/Sellers.vue'
+import Buyers from './components/Buyers.vue'
 
 
 
 export default {
   name: 'app',
   components: {
-    Entries1,
-    Entries2,
+    Sellers,
+    Buyers,
     DepthChart,
   },
   data () {
@@ -47,6 +47,9 @@ export default {
   computed: {
     getPage () {
       return this.perPage
+    },
+    getcurrPage () {
+      return 1
     }
   },
   methods: {
