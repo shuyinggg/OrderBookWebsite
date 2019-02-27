@@ -4,7 +4,7 @@
     <b-table 
       striped 
       hover 
-      dark
+      
       small  
       :per-page="perPage"
       :total-rows="getLen"
@@ -35,8 +35,8 @@
     </template>
   </b-table>
   <b-row class="text-secondary">
-    <b-col class="text-left">{{total2}} USD</b-col>
-    <b-col class="text-right">{{total1}} BTC</b-col>
+    <b-col class="text-left">{{totalASK}} USD</b-col>
+    <b-col class="text-right">{{totalSize}} BTC</b-col>
   </b-row>
     <b-pagination
       align="center" 
@@ -81,13 +81,13 @@ export default {
       getPerPage () {
         return this.perPage
       },
-       getCurrentPage() {
+      getCurrentPage () {
         return this.currentPage
       },
-      total1 () {
+      totalSize () {
         return this.orders.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
       },
-      total2 () {
+      totalASK () {
         return this.orders.reduce(function(a, c){return a + c.ASK || 0},0).toFixed(3)
       }
   }

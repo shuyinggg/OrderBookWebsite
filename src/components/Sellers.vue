@@ -4,7 +4,7 @@
     <b-table 
       striped 
       hover 
-      dark
+      
       small  
       :per-page="getPerPage"
       :total-rows="getLen"
@@ -36,8 +36,8 @@
     </template>
   </b-table>
   <b-row class="text-secondary">
-      <b-col class="text-left">{{total1}} BTC</b-col>
-      <b-col class="text-right">{{total2}} USD</b-col>
+      <b-col class="text-left">{{totalSIZE}} BTC</b-col>
+      <b-col class="text-right">{{totalBID}} USD</b-col>
   </b-row>
   <b-pagination align="center" size="sm" :total-rows="getLen" v-model="currentPage" :per-page="perPage" />
   </div>
@@ -82,10 +82,10 @@ export default {
       getCurrentPage() {
         return this.currentPage
       },
-      total1 () {
+      totalSIZE () {
         return this.orders.reduce(function(a, c){return a + c.SIZE || 0},0).toFixed(3)
       },
-      total2 () {
+      totalBID () {
         return this.orders.reduce(function(a, c){return a + c.BID || 0},0).toFixed(3)
       }
   }
