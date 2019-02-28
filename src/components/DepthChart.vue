@@ -93,6 +93,8 @@ export default {
                         .attr("viewBox", "0 0 " + width + " " + height)
                         .classed("svg-content-responsive", true)
                         .attr('id', "svgbox"); 
+
+        
             const x = d3.scaleLinear()
                         .range([margin.left, width - margin.right])
                         .domain([this.getx0,this.getxend]);
@@ -142,7 +144,7 @@ export default {
                 .style("color","grey")
                 .attr("opacity",0.3)
 
-            //append tooltip
+            //append tooltip and mouse line
             var tooltipBID = d3.select("body").append("div")
                         .attr("class", "tooltipbid")
                         .style("opacity",0)
@@ -159,6 +161,14 @@ export default {
                             .append("div")
                             .attr("class","tooltipxa")
                             .style("opacity",0)
+            var mouseG = svg.append("g")
+                .attr("class", "mouse-over-effects");
+
+                mouseG.append("path") // this is the black vertical line to follow mouse
+                .attr("class", "mouse-line")
+                .style("stroke", "grey")
+                .style("stroke-width", "1px")
+                .style("opacity", "0");
             //area generator
             const areaBID = d3.area()
                         .curve(d3.curveStep)
@@ -209,22 +219,6 @@ export default {
             .attr("opacity",0.15)
             .attr("d",areaASK)
 
-            //append tooltip cursor (the vertical line) for bid
-            svg.selectAll('rect.hover-line-bid')
-            .data(this.BIDdata).enter()
-            .append('rect')
-            .attr('id',function(d,i) {
-                return 'bline-'+i;
-            })
-            .attr('class','hover-line-bid')
-            .style('opacity',0)
-            .attr('width',1)
-            .attr('height',height-margin.bottom)
-            .attr('x', function(d) {return x(d.BID)})
-            .attr('y',function(_) {return y(_)})  
-            .style('fill',"grey")
-
-
             //append tooltip hover box for bid (in that box show tooltip)
             svg.selectAll('rect.hover-box-bid')
             .data(this.BIDdata).enter()
@@ -237,46 +231,40 @@ export default {
             .attr('x', function(d) {return x(d.BID)})
             .attr('y',function(_) {return y(_)})
             .on('mouseover', function() {
-                tooltipBID.style("display", null)})
-            .on('mousemove',function(d,i) {
+                tooltipBID.style("display", null);
+                d3.select(".mouse-line").style("opacity", "1");
+            })  
+            .on('mousemove',function(d) {
                 var svgdim = svg.node().getBoundingClientRect();
-                 const currLine = '#bline-'+i;
-                 d3.select(currLine).style('opacity',0.5);
+                //  const currLine = '#bline-'+i;
+                //  d3.select(currLine).style('opacity',0.5);
                 tooltipBID.style("opacity", 1);
                 tooltipBID.html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                                 "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID.toFixed(4)+ 
                                 "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
                 .style("left", (d3.event.clientX) + "px")
+                //.style("top", (y(d.cumSIZE)+margin.top) + "px");
                 .style("top", ((y(d.cumSIZE)+margin.top)*(svgdim.height+60)/(height+60))+ "px")
                 //.style("transition","all 240ms ease-in-out")
                 tooltipxb.style("opacity",1);
                 tooltipxb.html(d.BID.toFixed(4))
                 .style("left", (d3.event.clientX-28) + "px")
                 .style("top", ((y(0)+margin.top+55)*(svgdim.height+90)/(height+90))+"px")
-                })
-            .on("mouseout", function(d,i) {
-                tooltipBID.style("opacity", 0)
-                //.style("transition","all 0.2s ease-in-out");
-                // hover line
-                const currentLine = '#bline-' + i;
-                d3.select(currentLine).style('opacity', 0);
+                
+                var mouse = d3.mouse(this);
+                    d3.select(".mouse-line")
+                    .attr("d", function() {
+                    var d = "M" + mouse[0] + "," + (height - margin.bottom);
+                    d += " " + mouse[0] + "," + 0;
+                    return d;
+                    });
+            })
+            .on("mouseout", function() {
+                tooltipBID.style("opacity", 0);
                 tooltipxb.style("opacity",0);
+                d3.select(".mouse-line").style("opacity", "0");
             });
 
-            //append tooltip cursor (the vertical line) for ask
-            svg.selectAll('rect.hover-line-ask')
-            .data(this.ASKdata).enter()
-            .append('rect')
-            .attr('id',function(d,i) {
-                return 'aline-'+i;
-            })
-            .attr('class','hover-line-ask')
-            .style('opacity',0)
-            .attr('width',1)
-            .attr('height',height-margin.bottom)
-            .attr('x', function(d) {return x(d.ASK)})
-            .attr('y',function(_) {return y(_)})
-            .style('fill',"grey")
             //append tooltip hover box for ask(in that box show tooltip)
             svg.selectAll('rect.hover-box-ask')
             .data(this.ASKdata).enter()
@@ -288,29 +276,32 @@ export default {
             .attr('height',height-margin.bottom)
             .attr('x', function(d) {return x(d.ASK)})
             .attr('y',function(_) {return y(_)})
-            //.on('mouseover',function()   {tooltipASK.style("display", null);})
-            .on('mouseover',function(d,i) {
+            .on('mouseover',function()   {
+                tooltipASK.style("display", null);
+                d3.select(".mouse-line").style("opacity",1)})
+            .on('mousemove',function(d) {
                  var svgdim = svg.node().getBoundingClientRect();
-                const currLine = '#aline-'+i;
-                d3.select(currLine).style('opacity',0.5);
                 tooltipASK.style("opacity", 1);
                 tooltipASK.html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                                 "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK.toFixed(4)+ 
-                                "</span><br/><br/><strong>CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3) + "</span>")
+                                "</span><br/><strong>CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3) + "</span>")
                 .style("left", (d3.event.clientX-144) + "px")
                 .style("top", ((y(d.cumSIZE)+margin.top)*svgdim.height/height)+ "px")
                 tooltipxa.style("opacity",1);
                 tooltipxa.html(d.ASK.toFixed(4))
                 .style("left", (d3.event.clientX - 30) + "px")
                 .style("top", ((y(0)+margin.top+55)*(svgdim.height+90)/(height+90))+"px")
-
-            }).on("mouseout", function(d,i) {
+                  var mouse = d3.mouse(this);
+                    d3.select(".mouse-line")
+                    .attr("d", function() {
+                    var d = "M" + mouse[0] + "," + (height - margin.bottom);
+                    d += " " + mouse[0] + "," + 0;
+                    return d;
+                    });
+            }).on("mouseout", function() {
                 tooltipASK.style("opacity", 0);
-                            //.style("transition","all 0.2s ease-in-out");
-                // hover line
-                const currentLine = '#aline-' + i;
-                d3.select(currentLine).style('opacity', 0);
                 tooltipxa.style("opacity",0);
+                d3.select(".mouse-line").style("opacity",0);
             });
         },
 
@@ -355,7 +346,7 @@ export default {
     border: 2px solid#9e1818ce;
     text-align:left;
     width: 140px;
-    height: 100px;
+    height: auto;
     padding: 5px;
     background :white;
     border-radius: 8px;

@@ -2,8 +2,8 @@
 
 This project uses [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https://bootstrap-vue.js.org/).
 
-It displays two kinds of visualization of order book data.
-- Depth Chart
+The website displays two kinds of visualization of order book data.
+- Depth Chart (with [d3.js](https://d3js.org/))
 - Tables 
 
 ## Project Setup
