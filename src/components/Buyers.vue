@@ -52,7 +52,7 @@
 import list from '@/assets/ask.json'
 
 export default {
-  name: 'Entries',
+  name: 'buys',
   data () {
      return {
          fields: [{

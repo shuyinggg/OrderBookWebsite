@@ -1,6 +1,6 @@
 <template>
-        <div id="chart" ref="chart">
-        </div>
+  <div id="dchart" ref="dchart">
+  </div>
 </template>
 
 <script>
@@ -85,14 +85,13 @@ export default {
             };
             
             //draw responsive svg 
-            const svg = d3.select('#chart')
+            const svg = d3.select('#dchart')
                         .append('div')
                         .classed("svg-container", true)
                         .append('svg')
                         .attr("preserveAspectRatio", "xMinYMin meet")
                         .attr("viewBox", "0 0 " + width + " " + height)
-                        .classed("svg-content-responsive", true)
-                        .attr('id', "svgbox"); 
+                        .classed("svg-content-responsive", true);
 
         
             const x = d3.scaleLinear()
@@ -145,9 +144,13 @@ export default {
                 .attr("opacity",0.3)
 
             //append tooltip and mouse line
-            var tooltipBID = d3.select("body").append("div")
+            var tooltipBID = d3.select("body")
+                        .append("div")
                         .attr("class", "tooltipbid")
                         .style("opacity",0)
+            // var tooltipBID = d3.select('body').append('div')
+            //             .attr("class", "tooltipbid")
+            //             .style("opacity",0)
             var tooltipASK = d3.select("body")
                         .append("div")
                         .attr("class", "tooltipask")
@@ -236,26 +239,26 @@ export default {
             })  
             .on('mousemove',function(d) {
                 var svgdim = svg.node().getBoundingClientRect();
-                //  const currLine = '#bline-'+i;
-                //  d3.select(currLine).style('opacity',0.5);
-                tooltipBID.style("opacity", 1);
-                tooltipBID.html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
+                tooltipBID.style("opacity", 1)
+                .html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                                 "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID.toFixed(4)+ 
                                 "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
+                //.attr('transform', 'translate(' + d3.event.clientX + ',' + 500 + ')')
                 .style("left", (d3.event.clientX) + "px")
-                //.style("top", (y(d.cumSIZE)+margin.top) + "px");
-                .style("top", ((y(d.cumSIZE)+margin.top)*(svgdim.height+60)/(height+60))+ "px")
-                //.style("transition","all 240ms ease-in-out")
+                //.style("top", (y(d.cumSIZE) )+ "px");
+                .style("top", ((y(d.cumSIZE)+margin.top+30)*(svgdim.height+80)/(height+80))+ "px")
+                //.style("transition","all 1000ms ease-in-out")
                 tooltipxb.style("opacity",1);
                 tooltipxb.html(d.BID.toFixed(4))
                 .style("left", (d3.event.clientX-28) + "px")
-                .style("top", ((y(0)+margin.top+55)*(svgdim.height+90)/(height+90))+"px")
+                .style("top", ((y(0)+margin.top+70)*(svgdim.height+120)/(height+120))+"px")
                 
                 var mouse = d3.mouse(this);
                     d3.select(".mouse-line")
                     .attr("d", function() {
-                    var d = "M" + mouse[0] + "," + (height - margin.bottom);
+                    var d = "M" + mouse[0] + "," + (height-margin.bottom);
                     d += " " + mouse[0] + "," + 0;
+                    //console.log(d);
                     return d;
                     });
             })
@@ -286,16 +289,16 @@ export default {
                                 "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK.toFixed(4)+ 
                                 "</span><br/><strong>CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3) + "</span>")
                 .style("left", (d3.event.clientX-144) + "px")
-                .style("top", ((y(d.cumSIZE)+margin.top)*svgdim.height/height)+ "px")
+                .style("top", ((y(d.cumSIZE)+margin.top+30)*(svgdim.height+80)/(height+80))+ "px")
                 tooltipxa.style("opacity",1);
                 tooltipxa.html(d.ASK.toFixed(4))
-                .style("left", (d3.event.clientX - 30) + "px")
-                .style("top", ((y(0)+margin.top+55)*(svgdim.height+90)/(height+90))+"px")
+                .style("left", (d3.event.clientX - 28) + "px")
+                .style("top", ((y(0)+margin.top+70)*(svgdim.height+120)/(height+120))+"px")
                   var mouse = d3.mouse(this);
                     d3.select(".mouse-line")
                     .attr("d", function() {
                     var d = "M" + mouse[0] + "," + (height - margin.bottom);
-                    d += " " + mouse[0] + "," + 0;
+                    d += " " + mouse[0] + "," + margin.top;
                     return d;
                     });
             }).on("mouseout", function() {

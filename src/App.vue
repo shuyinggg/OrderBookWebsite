@@ -3,9 +3,17 @@
     <b-container  >
       <b-row>
         <b-col>
-          <h>DEPTH CHART</h>
-          <DepthChart></DepthChart>
-        </b-col>
+          <b-card no-body>
+          <b-tabs large card>
+          <b-tab title = "Depth Chart" active>
+              <DepthChart></DepthChart>
+          </b-tab>
+          <b-tab title = "Market Chart" active>
+            <MarketChart></MarketChart>
+          </b-tab>
+        </b-tabs>
+       </b-card>
+      </b-col>
       </b-row>
       <b-row>
         <b-col><Sellers v-bind:perPage="getPage" :currentPage="getcurrPage"></Sellers></b-col>
@@ -28,10 +36,9 @@
 
 <script>
 import DepthChart from './components/DepthChart.vue'
+import MarketChart from './components/MarketChart.vue'
 import Sellers from './components/Sellers.vue'
 import Buyers from './components/Buyers.vue'
-
-
 
 export default {
   name: 'app',
@@ -39,7 +46,9 @@ export default {
     Sellers,
     Buyers,
     DepthChart,
+    MarketChart
   },
+
   data () {
     return {
       perPage: 10,
@@ -62,9 +71,5 @@ export default {
 </script>
 
 <style>
-h {
-  text-decoration: underline;
-  font-size: 40px;
-  color:gray;
-}
+
 </style>
