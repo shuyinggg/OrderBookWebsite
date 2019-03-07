@@ -148,7 +148,7 @@ export default {
                         .append("div")
                         .attr("class", "tooltipbid")
                         .style("opacity",0)
-            // var tooltipBID = d3.select('body').append('div')
+            // var tooltipBID = d3.select('.svg-container').append('g')
             //             .attr("class", "tooltipbid")
             //             .style("opacity",0)
             var tooltipASK = d3.select("body")
@@ -243,9 +243,10 @@ export default {
                 .html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                                 "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID.toFixed(4)+ 
                                 "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
-                //.attr('transform', 'translate(' + d3.event.clientX + ',' + 500 + ')')
-                .style("left", (d3.event.clientX) + "px")
-                //.style("top", (y(d.cumSIZE) )+ "px");
+                //.attr('transform', 'translate(' + x(d.BID) + ',' + y(d.cumSIZE)+ ')')
+                //.attr('transform', 'translate(' + 65 + ',' + 87+ ')')
+                .style("left", (d3.event.pageX) + "px")
+                //.style("top", (y(d.cumSIZE) - margin.top) + "px");
                 .style("top", ((y(d.cumSIZE)+margin.top+30)*(svgdim.height+80)/(height+80))+ "px")
                 //.style("transition","all 1000ms ease-in-out")
                 tooltipxb.style("opacity",1);
