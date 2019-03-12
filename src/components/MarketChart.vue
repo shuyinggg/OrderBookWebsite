@@ -55,7 +55,6 @@ export default {
                         .attr("viewBox", "0 0 " + width + " " + height)
                         .classed("svg-content-responsive", true);
 
-            //let dates = this.tradeHistory.map(a => a.parsedTime);
             //x scale 
             var x = d3.scaleTime()
                         .domain([d3.timeWeek(d3.min(this.tradeHistory,function(d) {return d.parsedTime})),
@@ -136,6 +135,13 @@ export default {
                 .style("opacity", 0);
             //append tooltip to display data in the top left corner
             var tooltip = d3.select('#mchart').select('.svg-container').append('g')
+                            .attr("class","tooltip")
+                            .style("opacity", 0)
+
+            var tooltipx = d3.select('#mchart').select('.svg-container').append('g')
+                            .attr("class","tooltip")
+                            .style("opacity", 0)
+            var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
                             .attr("class","tooltip")
                             .style("opacity", 0)
 
@@ -227,6 +233,10 @@ export default {
                     return d;
                     });
 
+                // tooltipx.style("opacity",1);
+                // tooltipx.html(l.parsedTime)
+                
+                // console.log(tooltipx.transform)
                 //show tooltip to display data
                 tooltip.html(
                     '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
