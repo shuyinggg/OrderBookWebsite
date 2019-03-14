@@ -101,14 +101,13 @@ export default {
                         .range([height - margin.bottom, margin.top])
                         .domain([0, this.getyend]);
             var xAxis = d3.axisBottom(x);
-            var yAxis = d3.axisLeft(y);
             //append axes
             var gX = svg.append('g')
             .attr('class', 'axis axis-x')
             .attr('transform', `translate(0,${height - margin.bottom})`)
             .call(d3.axisBottom(x))
             .style("color","grey")
-            var gY = svg.append('g')
+            svg.append('g')
             .attr('class','axis axis-y')
             .attr("transform",`translate(${margin.left},0)`)
             .call(d3.axisLeft(y))
@@ -147,14 +146,14 @@ export default {
                 //.attr("clip-path", "url(#clipd)")
 
             //append tooltip and mouse line
-            var tooltipBID = d3.select("body")
-                        .append("div")
-                        .attr("class", "tooltipbid")
-                        .style("opacity",0)
-            // var tooltipBID = d3.select('.svg-container').append('g')
+            // var tooltipBID = d3.select("body")
+            //             .append("div")
             //             .attr("class", "tooltipbid")
             //             .style("opacity",0)
-            var tooltipASK = d3.select("body")
+            var tooltipBID = d3.select('.svg-container').append('g')
+                        .attr("class", "tooltipbid")
+                        .style("opacity",0)
+            var tooltipASK = d3.select('.svg-container').append('g')
                         .append("div")
                         .attr("class", "tooltipask")
                         .style("opacity",0)
@@ -239,6 +238,7 @@ export default {
             .append('rect')
             .style('opacity',0)
             .attr('class','hover-box-bid')
+            .attr("clip-path", "url(#clipd)")
             //.attr('width', "1px")
             .attr('width', function(d) {return x(d.prev)-x(d.BID)})
             .attr('height',height-margin.bottom)
@@ -249,32 +249,23 @@ export default {
                 d3.select(".mouse-line").style("opacity", "1");
             })  
             .on('mousemove',function(d) {
+                var mouse = d3.mouse(this);
                 var svgdim = svg.node().getBoundingClientRect();
                 tooltipBID.style("opacity", 1)
-                var matrix = this.getScreenCTM()
-                    .translate(+ this.getAttribute("cx"), + this.getAttribute("cy"));
                 tooltipBID.html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                               "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID.toFixed(4)+ 
                                "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
-                .style("left", (window.pageXOffset + matrix.e + 15) + "px")
-                .style("top", (window.pageYOffset + matrix.f - 30) + "px");
-                // .html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
-                //                 "</span><br/><strong>BID:</strong> <span style='color:grey'>" + d.BID.toFixed(4)+ 
-                //                 "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
-                // //.attr('transform', 'translate(' + x(d.BID) + ',' + y(d.cumSIZE)+ ')')
-                // //.attr('transform', 'translate(' + 65 + ',' + 87+ ')')
-                // .style("left", (d3.event.pageX) + "px")
-                // //.style("top", (y(d.cumSIZE) - margin.top) + "px");
-                // .style("top", ((y(d.cumSIZE)+margin.top+30)*(svgdim.height+80)/(height+80))+ "px")
-                // //.style("transition","all 1000ms ease-in-out")
+                .style("left", (mouse[0]*svgdim.height/height+2) + "px")
+                //.style("top", y(0)+ "px");
+                .style("top", ( ((y(d.cumSIZE)-20)*svgdim.height/height)+ "px"))
                 tooltipxb.style("opacity",1);
                 tooltipxb.html(d.BID.toFixed(4))
                 .style("left", (d3.event.clientX-28) + "px")
                 .style("top", ((y(0)+margin.top+70)*(svgdim.height+120)/(height+120))+"px")
                 
-                var mouse = d3.mouse(this);
-                    d3.select(".mouse-line")
-                    .attr("d", function() {
+                mouse = d3.mouse(this);
+                d3.select(".mouse-line")
+                .attr("d", function() {
                     var d = "M" + mouse[0] + "," + (height-margin.bottom);
                     d += " " + mouse[0] + "," + 0;
                     //console.log(d);
@@ -293,7 +284,7 @@ export default {
             .append('rect')
             .style('opacity',0)
             .attr('class','hover-box-ask')
-            //.attr('width', '10px')
+            .attr("clip-path", "url(#clipd)")
             .attr('width',function(d) {return x(d.post)-x(d.ASK)})
             .attr('height',height-margin.bottom)
             .attr('x', function(d) {return x(d.ASK)})
@@ -302,18 +293,19 @@ export default {
                 tooltipASK.style("display", null);
                 d3.select(".mouse-line").style("opacity",1)})
             .on('mousemove',function(d) {
+                var mouse = d3.mouse(this);
                  var svgdim = svg.node().getBoundingClientRect();
                 tooltipASK.style("opacity", 1);
                 tooltipASK.html("<strong>SUM:</strong> <span style='color:grey'>" + d.SUM.toFixed(4) + 
                                 "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK.toFixed(4)+ 
                                 "</span><br/><strong>CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3) + "</span>")
-                .style("left", (d3.event.clientX-144) + "px")
-                .style("top", ((y(d.cumSIZE)+margin.top+30)*(svgdim.height+80)/(height+80))+ "px")
+                .style("left", ((mouse[0])*svgdim.height/height) - 144 + "px")
+                .style("top", ((y(d.cumSIZE)-20)*svgdim.height/height)+ "px")
                 tooltipxa.style("opacity",1);
                 tooltipxa.html(d.ASK.toFixed(4))
                 .style("left", (d3.event.clientX - 28) + "px")
                 .style("top", ((y(0)+margin.top+70)*(svgdim.height+120)/(height+120))+"px")
-                  var mouse = d3.mouse(this);
+                   mouse = d3.mouse(this);
                     d3.select(".mouse-line")
                     .attr("d", function() {
                     var d = "M" + mouse[0] + "," + (height - margin.bottom);
@@ -346,7 +338,7 @@ export default {
                 var xt = t.rescaleX(x);
                 var yt = t.rescaleY(y);
                 gX.call(xAxis.scale(xt));
-                gY.call(yAxis.scale(yt));
+                //gY.call(yAxis.scale(yt));
                 gXgrid.call(d3.axisBottom(x).scale(xt).ticks(8)
                     .tickSizeInner(-height+margin.top+margin.bottom)
                     .tickFormat(""));
@@ -354,31 +346,35 @@ export default {
                     .tickSizeInner(-width+margin.left+margin.right)
                     .tickFormat(""));
                 
-                 
-
             //zoom lines and area
             const areaBID = d3.area()
                         .curve(d3.curveStep)
                         .x(d => xt(d.BID))
                         .y0(y(0))
-                        .y1(d => yt(d.cumSIZE));
+                        .y1(d => y(d.cumSIZE));
             const areaASK = d3.area()
                         .curve(d3.curveStep)
                         .x(d => xt(d.ASK))
                         .y0(y(0))
-                        .y1(d => yt(d.cumSIZE));
+                        .y1(d => y(d.cumSIZE));
             const lineBID= d3.line()
                         .curve(d3.curveStep)
                         .x(d => xt(d.BID))
-                        .y(d => yt(d.cumSIZE));
+                        .y(d => y(d.cumSIZE));
             const lineASK = d3.line()
                         .curve(d3.curveStep)
                         .x(d => xt(d.ASK))
-                        .y(d => yt(d.cumSIZE));
+                        .y(d => y(d.cumSIZE));
             d3.selectAll('.bidline').attr("d", lineBID)
             d3.selectAll('.askline').attr("d", lineASK)
             d3.selectAll('.bidarea').attr("d", areaBID)
             d3.selectAll('.askarea').attr("d", areaASK) 
+
+            //zoom hover bars
+            d3.selectAll('.hover-box-bid').attr('width',function(d) {return xt(d.prev)-xt(d.BID)})
+            .attr('x', function(d) {return xt(d.BID)})
+            d3.selectAll('.hover-box-ask').attr('width',function(d) {return xt(d.post)-xt(d.ASK)})
+            .attr('x', function(d) {return xt(d.ASK)})
         })
 
         svg.call(zoom);
@@ -412,7 +408,7 @@ export default {
     border: 2px solid green;
     text-align:left;
     width: 140px;
-    height: auto;
+    height: 80px;
     padding: 5px;
     background :white;
     border-radius: 8px;

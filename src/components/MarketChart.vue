@@ -41,7 +41,7 @@ export default {
         createChart(width, height) {
             const margin = {
                 top:20,
-                bottom:30,
+                bottom:20,
                 left:40,
                 right:20
             };
@@ -92,14 +92,16 @@ export default {
             .style("color","grey")
 
             //draw upper y
-            var gY = svg.append('g')
+            // var gY = 
+            svg.append('g')
             .attr('class','axis axis-y')
             .attr("transform",`translate(${margin.left},0)`)
             .call(yAxis)
             .style("color","grey")
             .style("font-size","8px")
             //draw lower y
-            var gYlower = svg.append('g')
+            // var gYlower = 
+            svg.append('g')
             .attr('class','axis axis-y')
             .attr("transform",`translate(${margin.left},0)`)
             .call(ylowerAxis)
@@ -109,11 +111,18 @@ export default {
             //append clip to keep all the elements inside svg when zooming
             const bandwidth = (width - margin.left - margin.right)/this.tradeHistory.length - 2;
             svg.append("defs").append("clipPath")
-            .attr("id", "clip")
+            .attr("id", "clipupper")
             .append("rect")
             .attr("width", width- margin.right - margin.left + bandwidth/2)
-            .attr("height", height -margin.bottom)
+            .attr("height", height -margin.bottom - margin.top - 100)
             .attr("transform",`translate(${margin.left},${margin.top})`)
+
+            svg.append("defs").append("clipPath")
+            .attr("id", "cliplower")
+            .append("rect")
+            .attr("width", width- margin.right - margin.left + bandwidth/2)
+            .attr("height", 90)
+            .attr("transform",`translate(${margin.left},${height - margin.bottom - 90})`)
 
             //append cursor lines x and y
             var mouseX = svg.append("g")
@@ -141,9 +150,17 @@ export default {
             var tooltipx = d3.select('#mchart').select('.svg-container').append('g')
                             .attr("class","tooltip")
                             .style("opacity", 0)
-            var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
-                            .attr("class","tooltip")
-                            .style("opacity", 0)
+                            .style("border", "solid 0.5px gray")
+                            .style("text-align","center")
+                            .style("background","white")
+                            .style("border-radius","3px")
+            // var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
+            //                 .attr("class","tooltip")
+            //                 .style("opacity", 0)
+            //                 .style("border", "solid 0.5px gray")
+            //                 .style("text-align","center")
+            //                 .style("background","white")
+            //                 .style("border-radius","3px")
 
             //draw lower bar charts
             svg.append('g')
@@ -151,7 +168,7 @@ export default {
             .data(this.tradeHistory).enter()
             .append('rect')
             .style('opacity',0.7)
-            .attr("clip-path", "url(#clip)")
+            .attr("clip-path", "url(#cliplower)")
             .attr('class','volume')
             .attr('width', bandwidth)
             .attr('height',function(d) {return height-margin.bottom-ylower(d.Volume)})
@@ -165,7 +182,7 @@ export default {
             .data(this.tradeHistory).enter()
             .append('path')
             .attr('class','high-low')
-            .attr("clip-path", "url(#clip)")
+            .attr("clip-path", "url(#clipupper)")
             .attr("d", function(l) {
                     var d = "M" + x(l.parsedTime) + "," + y(l.High);
                     d += " " + x(l.parsedTime) + "," + y(l.Low);
@@ -182,7 +199,7 @@ export default {
             .append('rect')
             .style('opacity',1)
             .attr('class','open-close')
-            .attr("clip-path", "url(#clip)")
+            .attr("clip-path", "url(#clipupper)")
             .attr('width', bandwidth)
             .attr('height',function(d) {
                 if (d.Open < d.Close) {
@@ -207,6 +224,7 @@ export default {
             .append('rect')
             .style('opacity',0)
             .attr('class','hover-cursor')
+             .attr("clip-path", "url(#clipupper)")
             .attr('width', bandwidth)
             .attr('height',height-margin.bottom)
             .attr('x', function(d) {return x(d.parsedTime) - bandwidth/2})
@@ -232,12 +250,13 @@ export default {
                     //console.log(d);
                     return d;
                     });
+                //show tooltip x axis
+                tooltipx.html("<font size = 1>" + l.Time + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
+                .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
+                tooltipx.style("opacity",1)
 
-                // tooltipx.style("opacity",1);
-                // tooltipx.html(l.parsedTime)
-                
-                // console.log(tooltipx.transform)
-                //show tooltip to display data
+                //information box top left
                 tooltip.html(
                     '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
                 .style("opacity", 1);
@@ -245,19 +264,20 @@ export default {
             .on('mouseout', function() {
                 d3.select(".mouse-xline").style("opacity", 0);
                 d3.select(".mouse-yline").style("opacity", 0);
+                tooltipx.style('opacity',0);
+                //tooltipy.style('opacity',0);
+
             })
             
             const extent = [[0, 0], [width,height]];
             //implement zoom
             var zoom = d3.zoom()
-            .scaleExtent([1,80])
+            .scaleExtent([1,10])
             .translateExtent(extent)
             .extent(extent)
             .on('zoom',function() {
                 var t = d3.event.transform;
                 var xt = t.rescaleX(x);
-                var yt = t.rescaleY(y);
-                var ylowert = t.rescaleY(ylower);
                 gX.call(xAxis.scale(xt)
                 .tickFormat(function(d) {
                          if(d3.timeYear(d) < d) {
@@ -266,20 +286,23 @@ export default {
                             return d3.timeFormat("%M")(d)
                 }})
                 )
-                gY.call(yAxis.scale(yt))
-                gYlower.call(ylowerAxis.scale(ylowert))
+                //gY.call(yAxis.scale(yt))
+                //gYlower.call(ylowerAxis.scale(ylowert))
            
             d3.selectAll('.volume').attr("x", function(d) {return xt(d.parsedTime)- bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
             d3.selectAll('.open-close').attr("x", function(d) {return xt(d.parsedTime) - bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
-                
+            d3.selectAll('.hover-cursor').attr("x", function(d) {return xt(d.parsedTime) - bandwidth * t.k/2})
+                                    .attr("width", function() {return bandwidth * t.k})
             d3.selectAll('.high-low')
                 .attr("d", function(l) {
                     var d = "M" + xt(l.parsedTime) + "," + y(l.High);
                     d += " " + xt(l.parsedTime) + "," + y(l.Low);
                     return d;
             })
+
+            //tooltipx.style('left', (xt(t.parsedTime)*svg.node().getBoundingClientRect().height/height) + 'px')
                 
         })
 
@@ -307,7 +330,13 @@ export default {
     left: 0;
 }
 .tooltip {
-    position: absolute;
+    position: relative;
+    padding: 2px;
+    border-radius: 2px;
+    font-size: 8px;
+}
+.tooltipx {
+    position: relative;
     padding: 2px;
     border-radius: 2px;
     font-size: 8px;
