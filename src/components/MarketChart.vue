@@ -1,5 +1,9 @@
 <template>
   <div id="mchart">
+    <b-button-group size = 'sm'>
+      <b-button variant="light" @click = "changeTicks('w')">1 W</b-button>
+      <b-button variant="light" @click = "changeTicks('d')">1 D</b-button>
+    </b-button-group>
   </div>
 </template>
 <script>
@@ -10,13 +14,14 @@ export default {
     name: 'mchart',
     data () {
         return {
-            tradeHistory: this.parseData(trade),
+            tradeHistory: this.parseDataDay(trade),
             clientWidth: 900,
-            clientHeight: 400
+            clientHeight: 400,
+            //interval: 'd'
         }
     },
     mounted () {
-        this.createChart(this.clientWidth,this.clientHeight)
+        this.DrawChart(this.clientWidth,this.clientHeight)
     },
     computed: {
         getx0 () {
@@ -30,22 +35,34 @@ export default {
         // }
     },
     methods: {
-        parseData(jdata) {
+        getInterval(s) {
+           this.interval = s;
+        },
+        parseDataDay(jdata) {
             var arr = Object.keys(jdata).map(function(k) { return jdata[k]});
             var timeParser = d3.timeParse("%m/%d/%Y");
             arr.map(function(a) {
-                a.parsedTime = timeParser(a.Time); //in Standard time format
+                a.parsedTime = timeParser(a.Time); //in standard time format
             })
             return arr; 
         },
-        createChart(width, height) {
+        parseDataHour(jdata) {
+            var arr = Object.keys(jdata).map(function(k) { return jdata[k]});
+            var timeParser = d3.timeParse("%m/%d/%Y");
+            arr.map(function(a) {
+                //subject to change
+                a.parsedTime = timeParser(a.Time).getWeek(); //in standard time format
+            })
+            return arr; 
+        },
+        DrawChart(width, height) {
             const margin = {
                 top:20,
                 bottom:20,
                 left:40,
                 right:20
             };
-            
+            //////////////////////////INITIALIZE SVG////////////////////////////////////////////////////////////////////
             //draw responsive svg 
             const svg = d3.select('#mchart')
                         .append('div')
@@ -54,8 +71,8 @@ export default {
                         .attr("preserveAspectRatio", "xMinYMin meet")
                         .attr("viewBox", "0 0 " + width + " " + height)
                         .classed("svg-content-responsive", true);
-
-            //x scale 
+            ////////////////////////////AXES///////////////////////////////////////////////////////////////////
+            //x y scale set up
             var x = d3.scaleTime()
                         .domain([d3.timeWeek(d3.min(this.tradeHistory,function(d) {return d.parsedTime})),
                         d3.max(this.tradeHistory,function(d) {return d.parsedTime})])
@@ -71,24 +88,24 @@ export default {
             var ylower = d3.scaleLinear()
                     .domain(d3.extent(this.tradeHistory,function(d) {return d.Volume}))
                     .range([ height - margin.bottom, height - margin.bottom-90])
-            //console.log(d3.extent(this.tradeHistory, function(d) { return d.parsedTime;}));
+            //console.log(ylower);
             
             var xAxis = d3.axisBottom(x);
             var yAxis = d3.axisLeft(y);
             var ylowerAxis = d3.axisLeft(ylower);
-            //draw x axis
-            var gX = svg.append('g')
-            .attr('class', 'axis axis-x')
-            .attr('transform', `translate(0,${height - margin.bottom})`)
-            .call(xAxis
-            .tickFormat(function(d) {
-                         if(d3.timeYear(d) < d) {
+            xAxis.tickFormat(function(d) {
+                         if( d3.timeMonth(d) < d) {
                              return d3.timeFormat("%m/%d")(d)
                          } else {
                             return d3.timeFormat("%M")(d)
                          }
                      })
-            )
+
+            //draw x axis
+            var gX = svg.append('g')
+            .attr('class', 'axis axis-x')
+            .attr('transform', `translate(0,${height - margin.bottom})`)
+            .call(xAxis)
             .style("color","grey")
 
             //draw upper y
@@ -108,6 +125,7 @@ export default {
             .style("color","grey")
             .style("font-size","8px")
 
+            /////////////////////////////CLIP AREA////////////////////////////////////////////////////////////
             //append clip to keep all the elements inside svg when zooming
             const bandwidth = (width - margin.left - margin.right)/this.tradeHistory.length - 2;
             svg.append("defs").append("clipPath")
@@ -124,6 +142,7 @@ export default {
             .attr("height", 90)
             .attr("transform",`translate(${margin.left},${height - margin.bottom - 90})`)
 
+            /////////////////////////////CURSOR LINE////////////////////////////////////////////////////////////
             //append cursor lines x and y
             var mouseX = svg.append("g")
                 .attr("class", "mouse-over-effects");
@@ -142,6 +161,8 @@ export default {
                 .style("stroke", "grey")
                 .style("stroke-width", "1px")
                 .style("opacity", 0);
+
+            //////////////////////////////TOOLTIPS//////////////////////////////////////////////////////////////
             //append tooltip to display data in the top left corner
             var tooltip = d3.select('#mchart').select('.svg-container').append('g')
                             .attr("class","tooltip")
@@ -149,19 +170,33 @@ export default {
 
             var tooltipx = d3.select('#mchart').select('.svg-container').append('g')
                             .attr("class","tooltip")
+                            .attr("id","tooltipx")
                             .style("opacity", 0)
                             .style("border", "solid 0.5px gray")
                             .style("text-align","center")
                             .style("background","white")
                             .style("border-radius","3px")
-            // var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
-            //                 .attr("class","tooltip")
-            //                 .style("opacity", 0)
-            //                 .style("border", "solid 0.5px gray")
-            //                 .style("text-align","center")
-            //                 .style("background","white")
-            //                 .style("border-radius","3px")
 
+            var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
+                            .attr("class","tooltip")
+                            .attr("id","tooltipy")
+                            .style("opacity", 0)
+                            .style("border", "solid 0.5px gray")
+                            .style("text-align","center")
+                            .style("background","white")
+                            .style("border-radius","3px")
+
+            var tooltipylower = d3.select('#mchart').select('.svg-container').append('g')
+                            .attr("class","tooltip")
+                            .attr("id","tooltipylower")
+                            .style("opacity", 0)
+                            .style("border", "solid 0.5px gray")
+                            .style("text-align","center")
+                            .style("background","white")
+                            .style("border-radius","3px")
+
+            ////////////////////////////////SVG ELEMENTS////////////////////////////////////////////////////////////////
+            //svg elements
             //draw lower bar charts
             svg.append('g')
             .selectAll('rect-volume')
@@ -217,14 +252,59 @@ export default {
                 }
             })
             .attr("fill", d => (d.Open === d.Close) ? "silver" : (d.Open > d.Close) ? "#9e1818ce" : "green")
-
+    
+            //draw arrows to indicate min max
+            const miny = d3.min(this.tradeHistory, d => d.Low);
+            const maxy = d3.max(this.tradeHistory, d => d.High);
+            const minyx = this.tradeHistory.find( function(d) {
+                return d.Low == miny;
+            }).parsedTime;
+            const maxyx = this.tradeHistory.find( function(d) {
+                return d.High == maxy;
+            }).parsedTime;
+            svg.append("svg:defs").append("svg:marker")
+            .attr("id", "marker-end")
+            .attr("refX", 6)
+            .attr("refY", 6)
+            .attr("markerWidth", 30)
+            .attr("markerHeight", 30)
+            .attr("markerUnits","userSpaceOnUse")
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M 0 0 6 6 0 12 3 6")
+            .style("fill", "black");
+            //min line             
+            svg.append('g')
+                .append("line")
+                .attr('class','min-arrow')
+                .attr("x1",  x(minyx) - 15)
+                .attr("y1", y(miny))
+                .attr("x2", x(minyx))
+                .attr("y2", y(miny))
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                .attr("marker-end", "url(#marker-end)");
+            //max line
+            svg.append('g')
+                .append("line")
+                .attr('class','max-arrow')
+                .attr("x1",  x(maxyx) - 15)
+                .attr("y1", y(maxy))
+                .attr("x2", x(maxyx))
+                .attr("y2", y(maxy))
+                .attr("stroke-width", 1)
+                .attr("stroke", "black")
+                .attr("marker-end", "url(#marker-end)");
+            
+            //////////////////////////////////CURSOR///////////////////////////////////////////////////////////////////
             //draw bars for cursor
+            // upper vertical bars
             svg.selectAll('rect-hover-cursor')
             .data(this.tradeHistory).enter()
             .append('rect')
             .style('opacity',0)
             .attr('class','hover-cursor')
-             .attr("clip-path", "url(#clipupper)")
+            .attr("clip-path", "url(#clipupper)")
             .attr('width', bandwidth)
             .attr('height',height-margin.bottom)
             .attr('x', function(d) {return x(d.parsedTime) - bandwidth/2})
@@ -256,6 +336,13 @@ export default {
                 .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
                 tooltipx.style("opacity",1)
 
+                //show tooltip y axis
+                tooltipy.html("<font size = 1>" + y.invert(mouse[1]).toFixed(0) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                .style('top', (mouse[1]*svg.node().getBoundingClientRect().height/height)+ 'px')
+                .style('left', 0 + 'px')
+                tooltipy.style("opacity",1)
+                //console.log(y.invert(mouse[1]))
+
                 //information box top left
                 tooltip.html(
                     '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
@@ -265,10 +352,68 @@ export default {
                 d3.select(".mouse-xline").style("opacity", 0);
                 d3.select(".mouse-yline").style("opacity", 0);
                 tooltipx.style('opacity',0);
-                //tooltipy.style('opacity',0);
-
+                tooltipy.style('opacity',0);
+                tooltipylower.style("opacity",0)
             })
-            
+
+            //lower vertical bars
+            // upper vertical bars
+            svg.selectAll('rect-hover-cursor')
+            .data(this.tradeHistory).enter()
+            .append('rect')
+            .style('opacity',0)
+            .attr('class','hover-cursor')
+            .attr("clip-path", "url(#cliplower)")
+            .attr('width', bandwidth)
+            .attr('height',height-margin.bottom)
+            .attr('x', function(d) {return x(d.parsedTime) - bandwidth/2})
+            .attr('y',function(_) {return y(_)})
+            .on('mouseover', function() {
+                d3.select(".mouse-xline").style("opacity", 1);
+                d3.select(".mouse-yline").style("opacity", 1);
+            }) 
+            .on('mousemove', function(l) {
+                //cursor
+                var mouse = d3.mouse(this);
+                    d3.select(".mouse-xline")
+                    .attr("d", function() {
+                    var d = "M" + mouse[0] + "," + (height-margin.bottom);
+                    d += " " + mouse[0] + "," + margin.top;
+                    //console.log(d);
+                    return d;
+                    });
+                    d3.select(".mouse-yline")
+                    .attr("d", function() {
+                    var d = "M" + margin.left + "," + mouse[1];
+                    d += " " + (width-margin.right) + "," + mouse[1];
+                    //console.log(d);
+                    return d;
+                    });
+                //show tooltip x axis
+                tooltipx.html("<font size = 1>" + l.Time + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
+                .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
+                tooltipx.style("opacity",1)
+
+                //show tooltip ylower
+                tooltipylower.html("<font size = 1>" + ylower.invert(mouse[1]).toFixed(0) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                .style('top', (mouse[1]*svg.node().getBoundingClientRect().height/height)+ 'px')
+                .style('left', 0 + 'px')
+                tooltipylower.style("opacity",1)
+                console.log(ylower.invert(mouse[1]))
+
+                //information box top left
+                tooltip.html(
+                    '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
+                .style("opacity", 1);
+            })
+            .on('mouseout', function() {
+                d3.select(".mouse-xline").style("opacity", 0);
+                d3.select(".mouse-yline").style("opacity", 0);
+                tooltipylower.style("opacity",0)
+            })
+
+            ///////////////////////////////////////////ZOOM////////////////////////////////////////////////////////////////
             const extent = [[0, 0], [width,height]];
             //implement zoom
             var zoom = d3.zoom()
@@ -286,8 +431,6 @@ export default {
                             return d3.timeFormat("%M")(d)
                 }})
                 )
-                //gY.call(yAxis.scale(yt))
-                //gYlower.call(ylowerAxis.scale(ylowert))
            
             d3.selectAll('.volume').attr("x", function(d) {return xt(d.parsedTime)- bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
@@ -301,19 +444,31 @@ export default {
                     d += " " + xt(l.parsedTime) + "," + y(l.Low);
                     return d;
             })
+            d3.selectAll('.min-arrow').attr('x1', function(d) {return xt(minyx) - 15})
+                                      .attr('x2', function(d) {return xt(minyx)})
+
+            d3.selectAll('.max-arrow').attr('x1', function(d) {return xt(maxyx) - 15})
+                                      .attr('x2', function(d) {return xt(maxyx)})
 
             //tooltipx.style('left', (xt(t.parsedTime)*svg.node().getBoundingClientRect().height/height) + 'px')
                 
         })
-
         svg.call(zoom);
+
+        function changeTicks(interval) {
+            if (s == 'w') {
+
+            } else if (s == 'd') {
+
+            }
+        }
         }
     }
 }
 </script>
 
 <style scoped>
-    .svg-container {
+.svg-container {
     display: inline-block;
     position: relative;
     width: 100%;
@@ -329,13 +484,29 @@ export default {
     top: 10px;
     left: 0;
 }
-.tooltip {
+#tooltipx {
     position: relative;
     padding: 2px;
     border-radius: 2px;
     font-size: 8px;
 }
-.tooltipx {
+.svg-container #tooltipx::after {
+  content: " ";
+  position: relative;
+  bottom: 100%; 
+  left: 50%;
+  margin-top: -3px;
+  border-width: 3px;
+  border-style: solid;
+  border-color: transparent transparent  rgb(2, 2, 2) transparent;
+}
+.svg-container #tooltipy {
+    position: relative;
+    padding: 2px;
+    border-radius: 2px;
+    font-size: 8px;
+}
+.svg-container #tooltipylower {
     position: relative;
     padding: 2px;
     border-radius: 2px;

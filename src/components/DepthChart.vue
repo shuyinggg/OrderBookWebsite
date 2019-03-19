@@ -257,7 +257,7 @@ export default {
                                "</span><br/><strong> CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3))
                 .style("left", (mouse[0]*svgdim.height/height+2) + "px")
                 //.style("top", y(0)+ "px");
-                .style("top", ( ((y(d.cumSIZE)-20)*svgdim.height/height)+ "px"))
+                .style("top", ( ((y(d.cumSIZE)-25)*svgdim.height/height)+ "px"))
                 tooltipxb.style("opacity",1);
                 tooltipxb.html(d.BID.toFixed(4))
                 .style("left", (d3.event.clientX-28) + "px")
@@ -300,7 +300,7 @@ export default {
                                 "</span><br/><strong>ASK:</strong> <span style='color:grey'>" + d.ASK.toFixed(4)+ 
                                 "</span><br/><strong>CUMULATIVE SIZE: </strong> <span style='color:grey'>" + d.cumSIZE.toFixed(3) + "</span>")
                 .style("left", ((mouse[0])*svgdim.height/height) - 144 + "px")
-                .style("top", ((y(d.cumSIZE)-20)*svgdim.height/height)+ "px")
+                .style("top", ((y(d.cumSIZE)-25)*svgdim.height/height)+ "px")
                 tooltipxa.style("opacity",1);
                 tooltipxa.html(d.ASK.toFixed(4))
                 .style("left", (d3.event.clientX - 28) + "px")
