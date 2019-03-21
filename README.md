@@ -4,7 +4,7 @@ This project uses [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https:/
 
 The website displays three kinds of visualization of market data.
 - Depth Chart (with [d3.js](https://d3js.org/))
-- Candlestick Chart (with [d3.js]((https://d3js.org/)))
+- Candlestick Chart (with [d3.js]((https://d3js.org/))
 - Tables 
 
 ## Project Setup

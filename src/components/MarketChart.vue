@@ -1,8 +1,9 @@
 <template>
   <div id="mchart">
     <b-button-group size = 'sm'>
-      <b-button variant="light" @click = "changeTicks('d')">1 D</b-button>
-      <b-button variant="light" @click = "changeTicks('h')">1 H</b-button>
+      <b-button variant="light" @click = "RedrawWeekly">1 W</b-button>
+      <b-button variant="light" @click = "RedrawDaily">1 D</b-button>
+      <b-button variant="light" @click = "RedrawHourly">1 H</b-button>
     </b-button-group>
   </div>
 </template>
@@ -118,8 +119,14 @@ export default {
                             return d3.timeFormat("%M")(d)
                          }
                      })
-            this.DrawAxes(svg,xAxis, yAxis, ylowerAxis)
-
+            //draw x axis
+            var gX = svg.append('g')
+                    .attr('class', 'axis axis-x')
+                    .attr('transform', `translate(0,${height - margin.bottom})`)
+                    .call(xAxis)
+                    .style("color","grey");
+            //draw y and ylower
+            this.DrawAxes(svg, yAxis, ylowerAxis)
             //////////////////////////////////CURSOR LINES///////////////////////////////////////////////////
             this.DrawCursorLines(svg);
 
@@ -299,7 +306,7 @@ export default {
 
             ///////////////////////////////////////////ZOOM////////////////////////////////////////////////////////////////
             const extent = [[0, 0], [width,height]];
-            const gX = d3.select('.axis axis-x') ;
+            //const gX = d3.select('.axis axis-x') ;
             //implement zoom
             var zoom = d3.zoom()
             .scaleExtent([1,10])
@@ -309,12 +316,12 @@ export default {
                 var t = d3.event.transform;
                 var xt = t.rescaleX(x);
                 gX.call(xAxis.scale(xt)
-                .tickFormat(function(d) {
-                         if(d3.timeYear(d) < d) {
-                             return d3.timeFormat("%m/%d")(d)
-                         } else {
-                            return d3.timeFormat("%M")(d)
-                }})
+                // .tickFormat(function(d) {
+                //          if(d3.timeYear(d) < d) {
+                //              return d3.timeFormat("%m/%d")(d)
+                //          } else {
+                //             return d3.timeFormat("%M")(d)
+                // }})
                 )
            
                 d3.selectAll('.volume').attr("x", function(d) {return xt(d.parsedTime)- bandwidth * t.k/2})
@@ -360,16 +367,9 @@ export default {
                 .style("opacity", 0);
 
     },
-    DrawAxes(svg, xAxis, yAxis, ylowerAxis) {
+    DrawAxes(svg, yAxis, ylowerAxis) {
         //parameters
         const margin = this.margin;
-        const height = this.clientHeight;
-        //draw x axis
-        svg.append('g')
-        .attr('class', 'axis axis-x')
-        .attr('transform', `translate(0,${height - margin.bottom})`)
-        .call(xAxis)
-        .style("color","grey")
 
         //draw upper y
         svg.append('g')
@@ -486,8 +486,27 @@ export default {
             })
             .attr("fill", d => (d.Open === d.Close) ? "silver" : (d.Open > d.Close) ? "#9e1818ce" : "green")
     },
-        
-            
+    RedrawWeekly() {
+        const arr = this.tradeHistory;
+        const weekData = arr.filter(function(a,i) {
+            return !i || d3.timeWeek(a.parsedTime).getTime() != d3.timeWeek(arr[i-1].parsedTime).getTime();  
+        })
+        this.tradeHistory = weekData;
+        d3.select('#mchart').select('.svg-container').remove();
+        this.DrawChart();
+        //remove
+        //back to the original data set;
+        this.tradeHistory = this.parseData(trade);
+    },
+    RedrawDaily() {
+        d3.select('#mchart').select('.svg-container').remove();
+        this.DrawChart();
+    },
+    RedrawHourly() {
+        d3.select('#mchart').select('.svg-container').remove();
+        this.DrawChart();
+    }
+     
     }
 }
 </script>
