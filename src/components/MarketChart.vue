@@ -110,7 +110,6 @@ export default {
                         )
                     .range([ height - margin.bottom-100,margin.top,])
             var ylower = d3.scaleLinear()
-                    //.domain(d3.extent(this.tradeHistory,function(d) {return d.v}))
                     .domain([0, d3.max(this.tradeHistory, function(d) {return +d.v})])
                     .range([ height - margin.bottom, height - margin.bottom-90])
             var xAxis = d3.axisBottom(x);
@@ -395,7 +394,13 @@ export default {
                                       .attr('x2', function() {return xt(maxyx)})
                 
             })
-            svg.call(zoom);
+            if (interval == 'h') {
+                svg.call(zoom)
+                svg.call(zoom.transform, d3.zoomIdentity.scale(8,1));
+            } else {
+                svg.call(zoom);
+            }
+            
         },
         DrawCursorLines(svg) {
         /////////////////////////////CURSOR LINE////////////////////////////////////////////////////////////
