@@ -59,11 +59,11 @@ export default {
             const margin = this.margin;
             const svg = d3.select('#mchart')
                         .append('div')
-                        .classed("svg-container", true)
+                        .classed("svg-container-m", true)
                         .append('svg')
                         .attr("preserveAspectRatio", "xMinYMin meet")
                         .attr("viewBox", "0 0 " + width + " " + height)
-                        .classed("svg-content-responsive", true);
+                        .classed("svg-content-responsive-m", true);
             /////////////////////////////CLIP AREA////////////////////////////////////////////////////////////
             //append clip to keep all the elements inside svg when zooming : define strict svg area
             svg.append("defs").append("clipPath")
@@ -110,9 +110,9 @@ export default {
                         )
                     .range([ height - margin.bottom-100,margin.top,])
             var ylower = d3.scaleLinear()
-                    .domain(d3.extent(this.tradeHistory,function(d) {return d.v}))
+                    //.domain(d3.extent(this.tradeHistory,function(d) {return d.v}))
+                    .domain([0, d3.max(this.tradeHistory, function(d) {return +d.v})])
                     .range([ height - margin.bottom, height - margin.bottom-90])
-            
             var xAxis = d3.axisBottom(x);
             var yAxis = d3.axisLeft(y);
             var ylowerAxis = d3.axisLeft(ylower);
@@ -153,7 +153,7 @@ export default {
                 .attr("transform", `translate(${margin.left},0)`)
                 .style("stroke-dasharray", "5 5")
                 .call(yAxis.ticks(9)
-                .tickSizeInner(-width+margin.left+margin.right)
+                .tickSize(-width+margin.left+margin.right)
                 .tickFormat(""))
                 .style("color","grey")
                 .attr("opacity",0.3)
@@ -166,32 +166,40 @@ export default {
                             .attr("class","tooltip")
                             .style("opacity", 0)
 
-            var tooltipx = d3.select('#mchart').select('.svg-container').append('g')
-                            .attr("class","tooltip")
-                            .attr("id","tooltipx")
+            var tooltipx = d3.select("body").append('div')
+                            //d3.select('#mchart').select('.svg-container-m').append('g').append('div')
+                            .attr("class","tooltipxt")
+                            //.attr("id","tooltip")
                             .style("opacity", 0)
-                            .style("border", "solid 0.5px gray")
-                            .style("text-align","center")
-                            .style("background","white")
-                            .style("border-radius","3px")
+                            // .style("border", "solid 0.5px gray")
+                            // .style("text-align","center")
+                            // .style("background","white")
+                            // .style("border-radius","3px")
 
-            var tooltipy = d3.select('#mchart').select('.svg-container').append('g')
-                            .attr("class","tooltip")
-                            .attr("id","tooltipy")
+            var tooltipy = d3.select("body").append('div')
+            //d3.select('#mchart').select('.svg-container-m').append('g')
+                            .attr("class","tooltipyupper")
                             .style("opacity", 0)
-                            .style("border", "solid 0.5px gray")
-                            .style("text-align","center")
-                            .style("background","white")
-                            .style("border-radius","3px")
+                            // .style("border", "solid 0.5px gray")
+                            // .style("text-align","center")
+                            // .style("background","white")
+                            // .style("border-radius","3px")
 
-            var tooltipylower = d3.select('#mchart').select('.svg-container').append('g')
-                            .attr("class","tooltip")
-                            .attr("id","tooltipylower")
+            var tooltipylower = d3.select("body").append('div')
+            //d3.select('#mchart').select('.svg-container-m').append('g')
+                            .attr("class","tooltipylower")
                             .style("opacity", 0)
-                            .style("border", "solid 0.5px gray")
-                            .style("text-align","center")
-                            .style("background","white")
-                            .style("border-radius","3px")
+                            // .style("border", "solid 0.5px gray")
+                            // .style("text-align","center")
+                            // .style("background","white")
+                            // .style("border-radius","3px")
+
+            // var tooltipv = d3.select('#mchart').select('.svg-container-m').append('g')
+            //                 .attr("class","tooltip")
+            //                 .attr("id","tooltipv")
+            //                 .style("opacity", 0)
+            //                 .style("text-align","center")
+            //                 .style("border-radius","3px")
 
             ////////////////////////////////SVG ELEMENTS////////////////////////////////////////////////////////////////
             //svg elements
@@ -252,22 +260,28 @@ export default {
                     return d;
                     });
                 //show tooltip x axis
-                tooltipx.html("<font size = 1>" + l.parsedTime + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
-                .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
-                .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
-                tooltipx.style("opacity",1)
-
+                const timeFormatter = d3.timeFormat("%Y-%m-%d %H:%M");
+                tooltipx.html(timeFormatter(l.parsedTime))
+                .style('top', svg.node().getBoundingClientRect().height + 100 + 'px')
+                .style('left', d3.event.clientX - 52+ 'px');
+                tooltipx.style("opacity",1);
                 //show tooltip y axis
                 tooltipy.html("<font size = 1>" + y.invert(mouse[1]).toFixed(4) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
-                .style('top', (mouse[1]*svg.node().getBoundingClientRect().height/height)+ 'px')
-                .style('left', 0 + 'px')
+                .style('top', d3.event.clientY - 8+ 'px')
+                .style('left', (document.body.offsetWidth - svg.node().getBoundingClientRect().width)/2 + 'px')
                 tooltipy.style("opacity",1)
-                //console.log(y.invert(mouse[1]))
 
                 //information box top left
                 tooltip.html(
                     '<font size = "-5"> O:' + l.o + "  H:" + l.h + "  L:" + l.l + "  C:" + l.c + "  v:" + l.v+"</font>")
                 .style("opacity", 1);
+
+                // //Volume information for lower y
+                // tooltipv.html(
+                //     '<font size = "-5"> Volume:' + l.v+"</font>")
+                //         .style("top", height - margin.bottom - 100 + 'px')
+                //         .style('left', 0 + 'px');
+                // tooltipv.style("opacity", 1);
             })
             .on('mouseout', function() {
                 d3.select(".mouse-xline").style("opacity", 0);
@@ -276,6 +290,7 @@ export default {
                 tooltipx.style('opacity',0);
                 tooltipy.style('opacity',0);
                 tooltipylower.style("opacity",0)
+                //tooltipv.style("opacity",0)
             })
 
             ///lower vertical bars
@@ -297,6 +312,7 @@ export default {
             .on('mousemove', function(l) {
                 //cursor
                 var mouse = d3.mouse(this);
+                //console.log(mouse)
                     d3.select(".mouse-xline")
                     .attr("d", function() {
                     var d = "M" + mouse[0] + "," + (height-margin.bottom);
@@ -312,26 +328,32 @@ export default {
                     return d;
                     });
                 //show tooltip x axis
-                tooltipx.html("<font size = 1>" + l.parsedTime + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
-                .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
-                .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
+                const timeFormatter = d3.timeFormat("%Y-%m-%d %H:%M");
+                tooltipx.html(timeFormatter(l.parsedTime) )
+                .style('top', svg.node().getBoundingClientRect().height + 100+ 'px')
+                .style('left', d3.event.clientX - 52+ 'px');
                 tooltipx.style("opacity",1)
 
                 //show tooltip ylower
                 tooltipylower.html("<font size = 1>" + ylower.invert(mouse[1]).toFixed(0) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
-                .style('top', (mouse[1]*svg.node().getBoundingClientRect().height/height)+ 'px')
-                .style('left', 0 + 'px')
+                .style('top', d3.event.clientY - 8 + 'px')
+                .style('left', (document.body.offsetWidth - svg.node().getBoundingClientRect().width)/2 + 'px')
                 tooltipylower.style("opacity",1)
 
                 //information box top left
                 tooltip.html(
                     '<font size = "-5"> O:' + l.o + "  H:" + l.h + "  L:" + l.l + "  C:" + l.c + "  v:" + l.v +"</font>")
                 .style("opacity", 1);
+
+                // tooltipv.html(
+                //     '<font size = "-5"> Volume:' + l.v+"</font>")
+                // .style("opacity", 1);
             })
             .on('mouseout', function() {
                 d3.select(".mouse-xline").style("opacity", 0);
                 d3.select(".mouse-yline").style("opacity", 0);
-                tooltipylower.style("opacity",0)
+                tooltipylower.style("opacity",0);
+                //tooltipv.style("opacity",0);
             })
 
             ///////////////////////////////////////////ZOOM////////////////////////////////////////////////////////////////
@@ -526,7 +548,7 @@ export default {
             })
             weekData[0].parsedTime = d3.timeWeek.offset(weekData[1].parsedTime,-1);
             this.tradeHistory = weekData;
-            d3.select('#mchart').select('.svg-container').remove();
+            d3.select('#mchart').select('.svg-container-m').remove();
             this.DrawChart('w');
         },
         RedrawDaily() {
@@ -537,12 +559,12 @@ export default {
             })
             dayData[0].parsedTime = d3.timeDay.offset(dayData[1].parsedTime,-1);
             this.tradeHistory = dayData;
-            d3.select('#mchart').select('.svg-container').remove();
+            d3.select('#mchart').select('.svg-container-m').remove();
             this.DrawChart('d');
         },
         RedrawHourly() {
             this.tradeHistory = this.parseData(trade);
-            d3.select('#mchart').select('.svg-container').remove();
+            d3.select('#mchart').select('.svg-container-m').remove();
             this.DrawChart('h');
         }
      
@@ -550,50 +572,91 @@ export default {
 }
 </script>
 
-<style scoped>
-.svg-container {
+<style>
+.svg-container-m {
     display: inline-block;
     position: relative;
     width: 100%;
-    padding-bottom: 70%; /* aspect ratio */
+    padding-bottom: 47%; /* aspect ratio */
     vertical-align: top;
     overflow: hidden;
     background: rgba(219, 218, 218, 0.377);
     top: 0px;
 }
-.svg-content-responsive {
+.svg-content-responsive-m {
     display: inline-block;
     position: absolute;
     top: 10px;
     left: 0;
 }
-#tooltipx {
-    position: relative;
-    padding: 2px;
-    border-radius: 2px;
+.tooltipxt {
+    position: absolute;
+    border: solid 0.5px gray;
+    text-align:center;
+    width: 100px;
+    height: 17px;
+    padding: 3px;
+    background :white;
+    pointer-events: none;
     font-size: 8px;
+    opacity:0.5;
+    border-radius: 3px; 
 }
-.svg-container #tooltipx::after {
+.tooltipxt::after {
   content: " ";
-  position: relative;
-  bottom: 100%; 
+  position: absolute;
+  bottom: 100%; /* At the right of the tooltip */
   left: 50%;
   margin-top: -3px;
   border-width: 3px;
   border-style: solid;
   border-color: transparent transparent  rgb(2, 2, 2) transparent;
 }
-.svg-container #tooltipy {
-    position: relative;
-    padding: 2px;
-    border-radius: 2px;
+.tooltipyupper {
+    position: absolute;
+    border: solid 0.5px gray;
+    text-align:center;
+    width: 50px;
+    height: 17px;
+    padding: 3px;
+    background :white;
+    pointer-events: none;
     font-size: 8px;
+    opacity:0.5;
+    border-radius: 3px; 
 }
-.svg-container #tooltipylower {
-    position: relative;
-    padding: 2px;
-    border-radius: 2px;
+.tooltipyupper::after {
+  content: " ";
+  position: absolute;
+  top: 50%; /* At the right of the tooltip */
+  left: 100%;
+  margin-top: -3px;
+  border-width: 3px;
+  border-style: solid;
+  border-color: transparent transparent transparent  rgb(2, 2, 2);
+}
+.tooltipylower {
+    position: absolute;
+    border: solid 0.5px gray;
+    text-align:center;
+    width: 50px;
+    height: 17px;
+    padding: 3px;
+    background :white;
+    pointer-events: none;
     font-size: 8px;
+    opacity:0.5;
+    border-radius: 3px; 
+}
+.tooltipylower::after {
+  content: " ";
+  position: absolute;
+  top: 50%; /* At the right of the tooltip */
+  left: 100%;
+  margin-top: -3px;
+  border-width: 3px;
+  border-style: solid;
+  border-color: transparent transparent transparent  rgb(2, 2, 2);
 }
 </style>
 

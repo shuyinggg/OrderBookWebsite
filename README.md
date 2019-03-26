@@ -11,6 +11,7 @@ The website displays three kinds of visualization of market data.
 
 ```
 npm install
+npm i bootstrape
 npm i bootstrap-vue
 npm install d3
 ```
@@ -23,7 +24,7 @@ npm install d3
 │   ├── assets 
 │       ├── bid.json              # sample data in the table from sellers
         ├── ask.json              # sample data in the table from buyers
-        ├── trade.json            # via binance.com api
+        ├── trade.json            # via binance.com api (values are in text)
         ├── trade_mock.json       # randomly generated trade data 
 │   ├── components                # vue components
         ├── DepthChart.vue        # depth chart based on sample data
