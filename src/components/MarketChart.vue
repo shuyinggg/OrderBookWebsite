@@ -22,34 +22,32 @@ export default {
             margin:{
                 top:20,
                 bottom:20,
-                left:40,
+                left:60,
                 right:20
             }
         }
     },
     mounted () {
-        this.DrawChart();
+        this.DrawChart('h');
     },
-    // computed: {
-    //     getx0 () {
-    //         return d3.min(this.tradeHistory, d => d.parsedTime.getTime());
-    //     },
-    //     getxend () {
-    //         return d3.max(this.tradeHistory, d => d.parsedTime.getTime());
-    //     },
-    // },
     methods: {
         getBandWidth() {
-            return (this.clientWidth- this.margin.left - this.margin.right)/this.tradeHistory.length - 2;
+            const len = this.tradeHistory.length;
+            if (len > 100) {
+                return (this.clientWidth - this.margin.left - this.margin.right)/this.tradeHistory.length-0.5;
+            } else {
+                return (this.clientWidth - this.margin.left - this.margin.right)/this.tradeHistory.length-2;
+            }
+            
         },
         getInterval(s) {
            this.interval = s;
         },
         parseData(jdata) {
             var arr = Object.keys(jdata).map(function(k) { return jdata[k]});
-            var timeParser = d3.timeParse("%m/%d/%Y");
+            var timeParser = d3.timeParse("%Q");
             arr.map(function(a) {
-                a.parsedTime = timeParser(a.Time); //in standard time format
+                a.parsedTime = timeParser(a.open_time); //in standard time format
             })
             return arr; 
         },
@@ -68,23 +66,29 @@ export default {
                         .classed("svg-content-responsive", true);
             /////////////////////////////CLIP AREA////////////////////////////////////////////////////////////
             //append clip to keep all the elements inside svg when zooming : define strict svg area
-            const bandwidth = this.getBandWidth();
             svg.append("defs").append("clipPath")
             .attr("id", "clipupper")
             .append("rect")
-            .attr("width", width- margin.right - margin.left + bandwidth/2)
+            .attr("width", width- margin.right - margin.left)
             .attr("height", height -margin.bottom - margin.top - 100)
             .attr("transform",`translate(${margin.left},${margin.top})`)
 
             svg.append("defs").append("clipPath")
             .attr("id", "cliplower")
             .append("rect")
-            .attr("width", width- margin.right - margin.left + bandwidth/2)
+            .attr("width", width- margin.right - margin.left)
             .attr("height", 90)
             .attr("transform",`translate(${margin.left},${height - margin.bottom - 90})`)
+
+            svg.append("defs").append("clipPath")
+            .attr("id", "clipwhole")
+            .append("rect")
+            .attr("width", width- margin.right - margin.left)
+            .attr("height", height - margin.top - margin.bottom)
+            .attr("transform",`translate(${margin.left},0)`)
             return svg;
         },
-        DrawChart() {
+        DrawChart(interval) {
             ////////////////////////////////////////PARAMETERS///////////////////////////////////////////////
             const svg = this.DrawChartBasics();
             const margin = this.margin;
@@ -94,31 +98,47 @@ export default {
             ////////////////////////////AXES///////////////////////////////////////////////////////////////////
             //x y scale set up
             var x = d3.scaleTime()
-                        .domain([d3.timeWeek(d3.min(this.tradeHistory,function(d) {return d.parsedTime})),
-                        d3.max(this.tradeHistory,function(d) {return d.parsedTime})])
+                        .domain([d3.timeDay.offset((d3.min(this.tradeHistory,function(d) {return d.parsedTime})),0),
+                        d3.timeDay.offset(d3.max(this.tradeHistory,function(d) {return d.parsedTime}),1)])
                         // .domain(d3.timeWeek(d3.extent(this.tradeHistory, function(d) {return d.parsedTime})))
                         .range([margin.left, width - margin.right]);
                         //.ticks()  zoom
             var y = d3.scaleLinear()
                     .domain(
-                        [d3.min(this.tradeHistory,function(d) {return d.Low}),
-                        d3.max(this.tradeHistory,function(d) {return d.High})]
+                        [d3.min(this.tradeHistory,function(d) {return d.l}),
+                        d3.max(this.tradeHistory,function(d) {return d.h})]
                         )
                     .range([ height - margin.bottom-100,margin.top,])
             var ylower = d3.scaleLinear()
-                    .domain(d3.extent(this.tradeHistory,function(d) {return d.Volume}))
+                    .domain(d3.extent(this.tradeHistory,function(d) {return d.v}))
                     .range([ height - margin.bottom, height - margin.bottom-90])
             
             var xAxis = d3.axisBottom(x);
             var yAxis = d3.axisLeft(y);
             var ylowerAxis = d3.axisLeft(ylower);
-            xAxis.tickFormat(function(d) {
-                         if( d3.timeMonth(d) < d) {
-                             return d3.timeFormat("%m/%d")(d)
-                         } else {
-                            return d3.timeFormat("%M")(d)
-                         }
-                     })
+            ///////////////////////////////////////////DIFFERENT TICKS/////////////////////////////////////////
+            var formatMillisecond = d3.timeFormat(".%L"),
+                formatSecond = d3.timeFormat(":%S"),
+                formatMinute = d3.timeFormat("%I:%M"),
+                formatHour = d3.timeFormat("%I %p"),
+                formatDay = d3.timeFormat("%a %d"),
+                formatWeek = d3.timeFormat("%b %d"),
+                formatMonth = d3.timeFormat("%B"),
+                formatYear = d3.timeFormat("%Y");
+            if (interval == 'w') {
+                xAxis.ticks(d3.timeWeek);
+            } else if (interval == 'd') {
+                xAxis.ticks(d3.timeDay.every(2));
+            } else {
+                xAxis.tickFormat(function(d) { 
+                    return (d3.timeSecond(d) < d ? formatMillisecond
+                                    : d3.timeMinute(d) < d ? formatSecond
+                                    : d3.timeHour(d) < d ? formatMinute
+                                    : d3.timeDay(d) < d ? formatHour
+                                    : d3.timeMonth(d) < d ? (d3.timeWeek(d) < d ? formatDay : formatWeek)
+                                    : d3.timeYear(d) < d ? formatMonth
+                                    : formatYear)(d)});
+            }
             //draw x axis
             var gX = svg.append('g')
                     .attr('class', 'axis axis-x')
@@ -127,6 +147,16 @@ export default {
                     .style("color","grey");
             //draw y and ylower
             this.DrawAxes(svg, yAxis, ylowerAxis)
+            //draw y grid
+            svg.append("g")			
+                .attr("class", "grid")
+                .attr("transform", `translate(${margin.left},0)`)
+                .style("stroke-dasharray", "5 5")
+                .call(yAxis.ticks(9)
+                .tickSizeInner(-width+margin.left+margin.right)
+                .tickFormat(""))
+                .style("color","grey")
+                .attr("opacity",0.3)
             //////////////////////////////////CURSOR LINES///////////////////////////////////////////////////
             this.DrawCursorLines(svg);
 
@@ -165,25 +195,25 @@ export default {
 
             ////////////////////////////////SVG ELEMENTS////////////////////////////////////////////////////////////////
             //svg elements
-            //draw lower bar charts: Volume
+            //draw lower bar charts: v
             this.DrawVolumes(svg,x,ylower);
 
-            //draw high-low line
+            //draw h-l line
             this.DrawHighLow(svg,x,y);
 
-            //draw open close rect
+            //draw o c rect
             this.DrawOpenClose(svg,x,y);
     
             
             //////////////////////////////////////////////ARROWS////////////////////////////////////////////////////
             //these are the arrows to indicate min and max values
-            const miny = d3.min(this.tradeHistory, d => d.Low);
-            const maxy = d3.max(this.tradeHistory, d => d.High);
+            const miny = d3.min(this.tradeHistory, d => d.l);
+            const maxy = d3.max(this.tradeHistory, d => d.h);
             const minyx = this.tradeHistory.find( function(d) {
-                return d.Low == miny;
+                return d.l == miny;
             }).parsedTime;
             const maxyx = this.tradeHistory.find( function(d) {
-                return d.High == maxy;
+                return d.h == maxy;
             }).parsedTime;
             this.DrawArrows(svg,x,y,miny,maxy,minyx,maxyx);
 
@@ -222,13 +252,13 @@ export default {
                     return d;
                     });
                 //show tooltip x axis
-                tooltipx.html("<font size = 1>" + l.Time + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                tooltipx.html("<font size = 1>" + l.parsedTime + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
                 .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
                 .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
                 tooltipx.style("opacity",1)
 
                 //show tooltip y axis
-                tooltipy.html("<font size = 1>" + y.invert(mouse[1]).toFixed(0) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                tooltipy.html("<font size = 1>" + y.invert(mouse[1]).toFixed(4) + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
                 .style('top', (mouse[1]*svg.node().getBoundingClientRect().height/height)+ 'px')
                 .style('left', 0 + 'px')
                 tooltipy.style("opacity",1)
@@ -236,7 +266,7 @@ export default {
 
                 //information box top left
                 tooltip.html(
-                    '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
+                    '<font size = "-5"> O:' + l.o + "  H:" + l.h + "  L:" + l.l + "  C:" + l.c + "  v:" + l.v+"</font>")
                 .style("opacity", 1);
             })
             .on('mouseout', function() {
@@ -282,7 +312,7 @@ export default {
                     return d;
                     });
                 //show tooltip x axis
-                tooltipx.html("<font size = 1>" + l.Time + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
+                tooltipx.html("<font size = 1>" + l.parsedTime + "</font>")//.attr("transform", "translate(" + coord[0] + "," + (coord[1] - 20) + ")");
                 .style('top', (svg.node().getBoundingClientRect().height)+ 'px')
                 .style('left', (mouse[0]*svg.node().getBoundingClientRect().height/height) - 25 + 'px')
                 tooltipx.style("opacity",1)
@@ -295,7 +325,7 @@ export default {
 
                 //information box top left
                 tooltip.html(
-                    '<font size = "-5"> O:' + l.Open.toFixed(4) + "  H:" + l.High.toFixed(4) + "  L:" + l.Low.toFixed(4) + "  C:" + l.Close.toFixed(4) + "  Volume:" + l.Volume.toFixed(4)+"</font>")
+                    '<font size = "-5"> O:' + l.o + "  H:" + l.h + "  L:" + l.l + "  C:" + l.c + "  v:" + l.v +"</font>")
                 .style("opacity", 1);
             })
             .on('mouseout', function() {
@@ -324,16 +354,16 @@ export default {
                 // }})
                 )
            
-                d3.selectAll('.volume').attr("x", function(d) {return xt(d.parsedTime)- bandwidth * t.k/2})
+                d3.selectAll('.v').attr("x", function(d) {return xt(d.parsedTime)- bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
-                d3.selectAll('.open-close').attr("x", function(d) {return xt(d.parsedTime) - bandwidth * t.k/2})
+                d3.selectAll('.o-c').attr("x", function(d) {return xt(d.parsedTime) - bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
                 d3.selectAll('.hover-cursor').attr("x", function(d) {return xt(d.parsedTime) - bandwidth * t.k/2})
                                     .attr("width", function() {return bandwidth * t.k})
-                d3.selectAll('.high-low')
+                d3.selectAll('.h-l')
                                     .attr("d", function(l) {
-                                        var d = "M" + xt(l.parsedTime) + "," + y(l.High);
-                                        d += " " + xt(l.parsedTime) + "," + y(l.Low);
+                                        var d = "M" + xt(l.parsedTime) + "," + y(l.h);
+                                        d += " " + xt(l.parsedTime) + "," + y(l.l);
                                         return d;
                                     })
                 d3.selectAll('.min-arrow').attr('x1', function() {return xt(minyx) - 15})
@@ -344,8 +374,8 @@ export default {
                 
             })
             svg.call(zoom);
-    },
-    DrawCursorLines(svg) {
+        },
+        DrawCursorLines(svg) {
         /////////////////////////////CURSOR LINE////////////////////////////////////////////////////////////
             //append cursor lines x and y
             var mouseX = svg.append("g")
@@ -366,10 +396,10 @@ export default {
                 .style("stroke-width", "1px")
                 .style("opacity", 0);
 
-    },
-    DrawAxes(svg, yAxis, ylowerAxis) {
-        //parameters
-        const margin = this.margin;
+        },
+        DrawAxes(svg, yAxis, ylowerAxis) {
+            //parameters
+            const margin = this.margin;
 
         //draw upper y
         svg.append('g')
@@ -409,7 +439,8 @@ export default {
                 .attr("y2", y(miny))
                 .attr("stroke-width", 1)
                 .attr("stroke", "black")
-                .attr("marker-end", "url(#marker-end)");
+                .attr("marker-end", "url(#marker-end)")
+                .attr("clip-path", "url(#clipwhole)");
             //max line
             svg.append('g')
                 .append("line")
@@ -420,7 +451,8 @@ export default {
                 .attr("y2", y(maxy))
                 .attr("stroke-width", 1)
                 .attr("stroke", "black")
-                .attr("marker-end", "url(#marker-end)");
+                .attr("marker-end", "url(#marker-end)")
+                .attr("clip-path", "url(#clipwhole)");
     },
     DrawVolumes(svg,x,ylower) {
         //parameters
@@ -429,32 +461,32 @@ export default {
         const bandwidth = this.getBandWidth();
         //draw
         svg.append('g')
-            .selectAll('rect-volume')
+            .selectAll('rect-v')
             .data(this.tradeHistory).enter()
             .append('rect')
             .style('opacity',0.7)
             .attr("clip-path", "url(#cliplower)")
-            .attr('class','volume')
+            .attr('class','v')
             .attr('width', bandwidth)
-            .attr('height',function(d) {return height-margin.bottom-ylower(d.Volume)})
-            .attr('x', function(d) {return x(d.parsedTime) - bandwidth/2})
-            .attr('y',function(d) {return ylower(d.Volume)})
-            .attr("fill", d => (d.Open === d.Close) ? "silver" : (d.Open > d.Close) ? "#9e1818ce" : "green")
+            .attr('height',function(d) {return height-margin.bottom-ylower(d.v)})
+            .attr('x', function(d) {return x(d.parsedTime)- bandwidth/2})
+            .attr('y',function(d) {return ylower(d.v)})
+            .attr("fill", d => (d.o === d.c) ? "silver" : (d.o > d.c) ? "#9e1818ce" : "green")
     },
     DrawHighLow(svg,x,y) {
         svg.append('g')
-            .selectAll('.line high-low')
+            .selectAll('.line h-l')
             .data(this.tradeHistory).enter()
             .append('path')
-            .attr('class','high-low')
+            .attr('class','h-l')
             .attr("clip-path", "url(#clipupper)")
             .attr("d", function(l) {
-                    var d = "M" + x(l.parsedTime) + "," + y(l.High);
-                    d += " " + x(l.parsedTime) + "," + y(l.Low);
+                    var d = "M" + x(l.parsedTime) + "," + y(l.h);
+                    d += " " + x(l.parsedTime) + "," + y(l.l);
                     //console.log(d);
                     return d;
             })
-            .style("stroke", d => (d.Open === d.Close) ? "silver" : (d.Open > d.Close) ? "#9e1818ce" : "green")
+            .style("stroke", d => (d.o === d.c) ? "silver" : (d.o > d.c) ? "#9e1818ce" : "green")
             .style("stroke-width", "1px")
     },
     DrawOpenClose(svg,x,y) {
@@ -462,50 +494,57 @@ export default {
         const bandwidth = this.getBandWidth();
         //draw
         svg.append('g')
-            .selectAll('rect-open-close')
+            .selectAll('rect-o-c')
             .data(this.tradeHistory).enter()
             .append('rect')
             .style('opacity',1)
-            .attr('class','open-close')
+            .attr('class','o-c')
             .attr("clip-path", "url(#clipupper)")
             .attr('width', bandwidth)
             .attr('height',function(d) {
-                if (d.Open < d.Close) {
-                    return y(d.Open) - y(d.Close);
+                if (d.o < d.c) {
+                    return y(d.o) - y(d.c);
                 } else {
-                    return y(d.Close) - y(d.Open);
+                    return y(d.c) - y(d.o);
                 }
             })
             .attr('x', function(d) {return x(d.parsedTime) - bandwidth/2})
             .attr('y',function(d) {
-                if (d.Open < d.Close) {
-                    return y(d.Close)
+                if (d.o < d.c) {
+                    return y(d.c)
                 } else {
-                    return y(d.Open)
+                    return y(d.o)
                 }
             })
-            .attr("fill", d => (d.Open === d.Close) ? "silver" : (d.Open > d.Close) ? "#9e1818ce" : "green")
-    },
-    RedrawWeekly() {
-        const arr = this.tradeHistory;
-        const weekData = arr.filter(function(a,i) {
+            .attr("fill", d => (d.o === d.c) ? "silver" : (d.o > d.c) ? "#9e1818ce" : "green")
+        },
+        RedrawWeekly() {
+            this.tradeHistory = this.parseData(trade);
+            const arr = this.tradeHistory;
+            const weekData = arr.filter(function(a,i) {
             return !i || d3.timeWeek(a.parsedTime).getTime() != d3.timeWeek(arr[i-1].parsedTime).getTime();  
-        })
-        this.tradeHistory = weekData;
-        d3.select('#mchart').select('.svg-container').remove();
-        this.DrawChart();
-        //remove
-        //back to the original data set;
-        this.tradeHistory = this.parseData(trade);
-    },
-    RedrawDaily() {
-        d3.select('#mchart').select('.svg-container').remove();
-        this.DrawChart();
-    },
-    RedrawHourly() {
-        d3.select('#mchart').select('.svg-container').remove();
-        this.DrawChart();
-    }
+            })
+            weekData[0].parsedTime = d3.timeWeek.offset(weekData[1].parsedTime,-1);
+            this.tradeHistory = weekData;
+            d3.select('#mchart').select('.svg-container').remove();
+            this.DrawChart('w');
+        },
+        RedrawDaily() {
+            this.tradeHistory = this.parseData(trade);
+            const arr = this.tradeHistory;
+            const dayData = arr.filter(function(a,i) {
+            return !i || d3.timeDay(a.parsedTime).getTime() != d3.timeDay(arr[i-1].parsedTime).getTime();  
+            })
+            dayData[0].parsedTime = d3.timeDay.offset(dayData[1].parsedTime,-1);
+            this.tradeHistory = dayData;
+            d3.select('#mchart').select('.svg-container').remove();
+            this.DrawChart('d');
+        },
+        RedrawHourly() {
+            this.tradeHistory = this.parseData(trade);
+            d3.select('#mchart').select('.svg-container').remove();
+            this.DrawChart('h');
+        }
      
     }
 }

@@ -4,8 +4,8 @@ This project uses [vue.js 2.0](https://vuejs.org/) and [bootstrap + vue](https:/
 
 The website displays three kinds of visualization of market data.
 - Depth Chart (with [d3.js](https://d3js.org/))
-- Candlestick Chart (with [d3.js]((https://d3js.org/))
-- Tables 
+- Candlestick Chart (with [d3.js](https://d3js.org/))
+- Tables (Pagination)
 
 ## Project Setup
 
@@ -23,13 +23,15 @@ npm install d3
 │   ├── assets 
 │       ├── bid.json              # sample data in the table from sellers
         ├── ask.json              # sample data in the table from buyers
-        ├── trade.json            # randomly generated market data in consecutive days
+        ├── trade.json            # via binance.com api
+        ├── trade_mock.json       # randomly generated trade data 
 │   ├── components                # vue components
         ├── DepthChart.vue        # depth chart based on sample data
         ├── MarketChart.vue       # candlestick chart based on generated data
 │       ├── Sellers.vue           # left table
 │       ├── Buyers.vue            # right table
 │   ├── App.vue
+│   ├── trade_history.py          # obtain historical trade data from binance.com
 │   └── main.js                               
 ├── .gitignore
 ├── babel.config.js
